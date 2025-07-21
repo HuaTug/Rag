@@ -7,7 +7,14 @@ from typing import Dict, List, Optional, Any, Union
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
-from pydantic import BaseModel
+# 尝试导入pydantic，如果不可用则使用dataclass
+try:
+    from pydantic import BaseModel
+    PYDANTIC_AVAILABLE = True
+except ImportError:
+    PYDANTIC_AVAILABLE = False
+    BaseModel = object
+    print("Warning: pydantic not available, using dataclass fallback")
 
 
 class ChannelType(Enum):

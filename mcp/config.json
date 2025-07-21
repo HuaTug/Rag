@@ -1,0 +1,27 @@
+{
+  "google_search": {
+    "api_key": "",
+    "search_engine_id": "",
+    "timeout": 10,
+    "max_results": 10
+  },
+  "deepseek": {
+    "api_key": "sk-qFPEqgpxmS8DJ0nJQ6gvdIkozY1k2oEZER2A4zRhLxBvtIHl",
+    "base_url": "http://api.lkeap.cloud.tencent.com/v1",
+    "model": "deepseek-v3-0324"
+  },
+  "milvus": {
+    "uri": "./milvus_rag.db",
+    "collection_name": "rag_documents",
+    "dimension": 384
+  },
+  "embedding": {
+    "model_name": "all-MiniLM-L6-v2",
+    "cache_size": 1000
+  },
+  "rag": {
+    "similarity_threshold": 0.7,
+    "max_context_length": 4000,
+    "combine_search_and_vector": true
+  }
+}

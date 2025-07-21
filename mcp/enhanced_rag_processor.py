@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import json
 
 from mcp_framework import MCPProcessor, QueryContext, QueryAnalyzer, SearchResult
-from search_channels import SearchEngineChannel, LocalKnowledgeChannel, NewsChannel
+from search_channels import GoogleSearchChannel
 from dynamic_vector_store import DynamicVectorStore, VectorStoreManager
 from ask_llm import get_llm_answer
 from encoder import emb_text
@@ -28,9 +28,14 @@ class RAGResponse:
 class EnhancedRAGProcessor:
     """增强的RAG处理器"""
     
-    def __init__(self, config: Dict[str, Any]):
-        self.config = config
+    def __init__(self, vector_store=None, search_channels=None, llm_client=None, config: Dict[str, Any] = None):
+        self.config = config or {}
         self.logger = logging.getLogger(self.__class__.__name__)
+        
+        # 存储外部传入的组件
+        self.vector_store = vector_store
+        self.search_channels = search_channels or []
+        self.llm_client = llm_client
         
         # 初始化组件
         self.mcp_processor = MCPProcessor()
@@ -77,18 +82,19 @@ class EnhancedRAGProcessor:
     
     def _init_search_channels(self):
         """初始化搜索通道"""
-        # 搜索引擎通道
+        # Google搜索通道
         if self.config.get("enable_search_engine", True):
             search_config = {
-                "engine": self.config.get("search_engine", "duckduckgo"),
-                "api_key": self.config.get("search_api_key"),
+                "api_key": self.config.get("google_api_key"),
+                "search_engine_id": self.config.get("google_search_engine_id"),
+                "timeout": self.config.get("search_timeout", 10),
                 "priority": {"factual": 1, "analytical": 2, "creative": 5, "conversational": 3}
             }
-            search_channel = SearchEngineChannel(search_config)
+            search_channel = GoogleSearchChannel(search_config)
             self.mcp_processor.register_channel(search_channel)
         
-        # 本地知识库通道
-        if self.config.get("enable_local_knowledge", True):
+        # 本地知识库通道（暂时禁用，因为LocalKnowledgeChannel类不存在）
+        if False:  # self.config.get("enable_local_knowledge", True):
             local_store = self.vector_store_manager.get_store("local")
             if local_store:
                 local_config = {
@@ -97,17 +103,17 @@ class EnhancedRAGProcessor:
                     "encoder": emb_text,
                     "priority": {"factual": 2, "analytical": 1, "creative": 4, "conversational": 2}
                 }
-                local_channel = LocalKnowledgeChannel(local_config)
-                self.mcp_processor.register_channel(local_channel)
+                # local_channel = LocalKnowledgeChannel(local_config)
+                # self.mcp_processor.register_channel(local_channel)
         
-        # 新闻通道
-        if self.config.get("enable_news", False):
+        # 新闻通道（暂时禁用，因为NewsChannel类不存在）
+        if False:  # self.config.get("enable_news", False):
             news_config = {
                 "news_api_key": self.config.get("news_api_key"),
                 "priority": {"factual": 3, "analytical": 3, "creative": 6, "conversational": 4}
             }
-            news_channel = NewsChannel(news_config)
-            self.mcp_processor.register_channel(news_channel)
+            # news_channel = NewsChannel(news_config)
+            # self.mcp_processor.register_channel(news_channel)
     
     async def process_query(self, 
                            query: str, 
@@ -283,11 +289,61 @@ class EnhancedRAGProcessor:
             
             context = "\n\n".join(context_parts)
             
-            # 调用LLM生成答案
-            from ask_llm import get_deepseek_client
-            llm_client = get_deepseek_client()
-            
-            answer = get_llm_answer(llm_client, context, query)
+            # 调用DeepSeek LLM生成答案
+            try:
+                # 使用传入的LLM客户端
+                if hasattr(self, 'llm_client') and self.llm_client:
+                    # 构建消息格式
+                    messages = []
+                    
+                    if context:
+                        system_prompt = """
+你是一个智能助手。请基于提供的上下文信息回答用户问题。
+如果上下文信息充分，请优先使用上下文中的信息回答。
+如果上下文信息不够充分，可以结合你的知识给出有帮助的回答。
+请确保回答准确、有条理，并尽可能提供具体的信息。
+"""
+                        messages.append({"role": "system", "content": system_prompt})
+                        
+                        user_content = f"""
+基于以下上下文信息回答问题：
+
+{context}
+
+问题：{query}
+"""
+                    else:
+                        user_content = query
+                    
+                    messages.append({"role": "user", "content": user_content})
+                    
+                    # 调用DeepSeek API
+                    response = self.llm_client.chat_completions_create(
+                        model="deepseek-v3-0324",
+                        messages=messages,
+                        stream=False,
+                        enable_search=True  # 启用DeepSeek的搜索功能
+                    )
+                    
+                    if response and "choices" in response:
+                        answer = response["choices"][0]["message"]["content"]
+                    else:
+                        answer = "抱歉，无法生成回答"
+                        
+                else:
+                    # 降级到简单的上下文拼接
+                    if context:
+                        answer = f"基于搜索结果：\n\n{context}\n\n回答：请参考以上信息来回答关于'{query}'的问题。"
+                    else:
+                        answer = f"抱歉，没有找到关于'{query}'的相关信息。"
+                        
+            except Exception as e:
+                self.logger.error(f"LLM调用失败: {e}")
+                # 降级方案
+                if context:
+                    answer = f"基于搜索到的信息：\n\n{context}"
+                else:
+                    answer = f"抱歉，处理您的问题时出现了错误：{str(e)}"
             
             # 计算置信度（基于结果数量和相关性）
             confidence = min(1.0, len(results) * 0.1 + sum(r.get("score", 0) for r in results[:3]) / 3)

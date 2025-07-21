@@ -14,6 +14,7 @@ import time
 from typing import List, Dict, Any
 
 import aiohttp
+import requests  # 添加同步请求库
 from bs4 import BeautifulSoup
 
 from mcp_framework import BaseChannel, ChannelType, SearchResult, QueryContext
@@ -107,24 +108,23 @@ class GoogleSearchChannel(BaseChannel):
                 "cx": self.search_engine_id,
                 "q": context.query,
                 "num": min(context.max_results, 10),  # API最多返回10个结果
-                "hl": "zh-CN",  # 语言设置
-                "gl": "cn",     # 地区设置
             }
             
-            async with aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=self.timeout)
-            ) as session:
-                async with session.get(api_url, params=params) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        return await self._process_api_results(data)
-                    else:
-                        error_text = await response.text()
-                        self.logger.error(f"Google API 请求失败: {response.status} - {error_text}")
-                        return []
+            # 使用同步requests请求，和test.py保持一致
+            response = requests.get(api_url, params=params, timeout=self.timeout)
+            
+            if response.status_code == 200:
+                data = response.json()
+                return await self._process_api_results(data)
+            else:
+                error_text = response.text
+                self.logger.error(f"Google API 请求失败: {response.status_code} - {error_text}")
+                return []
                         
         except Exception as e:
             self.logger.error(f"Google API搜索失败: {e}")
+            import traceback
+            self.logger.error(f"详细错误信息: {traceback.format_exc()}")
             return []
     
     async def _process_api_results(self, data: Dict[str, Any]) -> List[SearchResult]:
@@ -321,7 +321,7 @@ async def test_google_search():
         context = QueryContext(
             query=query,
             query_type=QueryType.FACTUAL,
-            max_results=6
+            max_results=10
         )
         
         try:
