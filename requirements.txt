@@ -6,3 +6,18 @@ requests
 sentence-transformers
 torch
 # openai（可选，仅在使用OpenAI模型时需要）
+python-dotenv
+beautifulsoup4
+newspaper3k
+googlesearch-python
+duckduckgo-search
+asyncio
+aiohttp
+redis
+celery
+pydantic
+fastapi
+uvicorn
+beautifulsoup4
+googlesearch-python
+aiohttp
