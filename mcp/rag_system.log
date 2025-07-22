@@ -1,12 +1,702 @@
-2025-07-22 00:50:26,330 - __main__ - INFO - 配置文件加载成功: config.json
-2025-07-22 00:50:26,330 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
-2025-07-22 00:50:26,330 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
-2025-07-22 00:50:26,330 - __main__ - ERROR - 缺少必要配置: DeepSeek API Key
-2025-07-22 00:51:10,049 - __main__ - INFO - 配置文件加载成功: config.json
-2025-07-22 00:51:10,049 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
-2025-07-22 00:51:10,050 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
-2025-07-22 00:51:10,050 - __main__ - ERROR - 缺少必要配置: DeepSeek API Key
-2025-07-22 01:02:23,145 - __main__ - INFO - 配置文件加载成功: config.json
-2025-07-22 01:02:23,145 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
-2025-07-22 01:02:23,145 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
-2025-07-22 01:02:23,145 - __main__ - INFO - 🚀 开始初始化RAG系统...
+2025-07-22 15:28:51,341 - __main__ - INFO - 配置文件加载成功: config.json
+2025-07-22 15:28:51,342 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
+2025-07-22 15:28:51,342 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
+2025-07-22 15:28:51,342 - __main__ - INFO - 从环境变量加载: DEEPSEEK_API_KEY
+2025-07-22 15:28:51,342 - __main__ - INFO - 🚀 开始初始化RAG系统...
+2025-07-22 15:28:51,342 - __main__ - WARNING - ⚠️ DeepSeek API连接测试失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 15:28:51,342 - __main__ - INFO - ✅ DeepSeek客户端初始化完成
+2025-07-22 15:28:51,342 - __main__ - INFO - ✅ Google搜索通道初始化完成
+2025-07-22 15:28:51,920 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:28:51,923 - DynamicVectorStore - INFO - 集合已存在: rag_documents
+2025-07-22 15:28:51,923 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:28:51,924 - __main__ - INFO - ✅ 向量存储初始化完成
+2025-07-22 15:28:51,924 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:28:51,924 - __main__ - INFO - ✅ MCP处理器初始化完成
+2025-07-22 15:28:51,927 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:28:51,928 - DynamicVectorStore - INFO - 集合已存在: dynamic_search_results
+2025-07-22 15:28:51,928 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:28:51,928 - VectorStoreManager - INFO - 添加向量存储: dynamic
+2025-07-22 15:28:51,930 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:28:51,931 - DynamicVectorStore - INFO - 集合已存在: local_knowledge
+2025-07-22 15:28:51,931 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:28:51,931 - VectorStoreManager - INFO - 添加向量存储: local
+2025-07-22 15:28:51,931 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:28:51,931 - EnhancedRAGProcessor - INFO - 增强RAG处理器初始化完成
+2025-07-22 15:28:51,931 - __main__ - INFO - ✅ 增强RAG处理器初始化完成
+2025-07-22 15:28:51,932 - __main__ - INFO - 🎉 RAG系统初始化完成！
+2025-07-22 15:28:51,932 - __main__ - INFO - 🧪 开始系统测试...
+2025-07-22 15:28:51,932 - __main__ - INFO - 测试查询: 人工智能的发展历史 (factual)
+2025-07-22 15:28:51,932 - EnhancedRAGProcessor - INFO - 🔍 查询类型: factual
+2025-07-22 15:28:51,933 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-07-22 15:28:51,933 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-07-22 15:29:26,926 - __main__ - INFO - 配置文件加载成功: config.json
+2025-07-22 15:29:26,927 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
+2025-07-22 15:29:26,927 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
+2025-07-22 15:29:26,927 - __main__ - INFO - 从环境变量加载: DEEPSEEK_API_KEY
+2025-07-22 15:29:26,927 - __main__ - INFO - 🚀 开始初始化RAG系统...
+2025-07-22 15:29:26,927 - __main__ - WARNING - ⚠️ DeepSeek API连接测试失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 15:29:26,927 - __main__ - INFO - ✅ DeepSeek客户端初始化完成
+2025-07-22 15:29:26,927 - __main__ - INFO - ✅ Google搜索通道初始化完成
+2025-07-22 15:29:27,502 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:29:27,503 - DynamicVectorStore - INFO - 集合已存在: rag_documents
+2025-07-22 15:29:27,503 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:29:27,503 - __main__ - INFO - ✅ 向量存储初始化完成
+2025-07-22 15:29:27,504 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:29:27,504 - __main__ - INFO - ✅ MCP处理器初始化完成
+2025-07-22 15:29:27,506 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:29:27,507 - DynamicVectorStore - INFO - 集合已存在: dynamic_search_results
+2025-07-22 15:29:27,507 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:29:27,507 - VectorStoreManager - INFO - 添加向量存储: dynamic
+2025-07-22 15:29:27,509 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:29:27,510 - DynamicVectorStore - INFO - 集合已存在: local_knowledge
+2025-07-22 15:29:27,510 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:29:27,510 - VectorStoreManager - INFO - 添加向量存储: local
+2025-07-22 15:29:27,510 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:29:27,510 - EnhancedRAGProcessor - INFO - 增强RAG处理器初始化完成
+2025-07-22 15:29:27,510 - __main__ - INFO - ✅ 增强RAG处理器初始化完成
+2025-07-22 15:29:27,510 - __main__ - INFO - 🎉 RAG系统初始化完成！
+2025-07-22 15:29:27,510 - __main__ - INFO - 🧪 开始系统测试...
+2025-07-22 15:29:27,510 - __main__ - INFO - 测试查询: 人工智能的发展历史 (factual)
+2025-07-22 15:29:27,510 - EnhancedRAGProcessor - INFO - 🔍 查询类型: factual
+2025-07-22 15:29:27,512 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-07-22 15:29:27,512 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-07-22 15:29:49,123 - __main__ - INFO - 配置文件加载成功: config.json
+2025-07-22 15:29:49,124 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
+2025-07-22 15:29:49,124 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
+2025-07-22 15:29:49,124 - __main__ - INFO - 从环境变量加载: DEEPSEEK_API_KEY
+2025-07-22 15:29:49,124 - __main__ - INFO - 🚀 开始初始化RAG系统...
+2025-07-22 15:29:49,124 - __main__ - WARNING - ⚠️ DeepSeek API连接测试失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 15:29:49,124 - __main__ - INFO - ✅ DeepSeek客户端初始化完成
+2025-07-22 15:29:49,124 - __main__ - INFO - ✅ Google搜索通道初始化完成
+2025-07-22 15:29:49,697 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:29:49,697 - DynamicVectorStore - INFO - 集合已存在: rag_documents
+2025-07-22 15:29:49,697 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:29:49,698 - __main__ - INFO - ✅ 向量存储初始化完成
+2025-07-22 15:29:49,698 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:29:49,698 - __main__ - INFO - ✅ MCP处理器初始化完成
+2025-07-22 15:29:49,699 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:29:49,700 - DynamicVectorStore - INFO - 集合已存在: dynamic_search_results
+2025-07-22 15:29:49,700 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:29:49,700 - VectorStoreManager - INFO - 添加向量存储: dynamic
+2025-07-22 15:29:49,702 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:29:49,702 - DynamicVectorStore - INFO - 集合已存在: local_knowledge
+2025-07-22 15:29:49,702 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:29:49,702 - VectorStoreManager - INFO - 添加向量存储: local
+2025-07-22 15:29:49,702 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:29:49,702 - EnhancedRAGProcessor - INFO - 增强RAG处理器初始化完成
+2025-07-22 15:29:49,702 - __main__ - INFO - ✅ 增强RAG处理器初始化完成
+2025-07-22 15:29:49,702 - __main__ - INFO - 🎉 RAG系统初始化完成！
+2025-07-22 15:29:49,702 - __main__ - INFO - 🧪 开始系统测试...
+2025-07-22 15:29:49,703 - __main__ - INFO - 测试查询: 人工智能的发展历史 (factual)
+2025-07-22 15:29:49,703 - EnhancedRAGProcessor - INFO - 🔍 查询类型: factual
+2025-07-22 15:29:49,704 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-07-22 15:29:49,704 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-07-22 15:29:55,339 - EnhancedRAGProcessor - ERROR - 查询处理失败: name 'QueryType' is not defined
+2025-07-22 15:29:55,339 - __main__ - INFO - ✅ 回答: 抱歉，处理您的查询时出现错误: name 'QueryType' is not defined...
+2025-07-22 15:29:55,340 - __main__ - INFO - 测试查询: 机器学习和深度学习的区别 (analytical)
+2025-07-22 15:29:55,340 - EnhancedRAGProcessor - INFO - 🔍 查询类型: analytical
+2025-07-22 15:29:55,401 - EnhancedRAGProcessor - INFO - 🌐 需要搜索引擎查询: 最高相似度不足 (0.459 < 0.7)
+2025-07-22 15:29:55,402 - MCPProcessor - INFO - 处理查询: 机器学习和深度学习的区别
+2025-07-22 15:29:55,402 - GoogleSearchChannel - INFO - 开始Google API搜索: 机器学习和深度学习的区别
+2025-07-22 15:30:34,352 - __main__ - INFO - 配置文件加载成功: config.json
+2025-07-22 15:30:34,352 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
+2025-07-22 15:30:34,352 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
+2025-07-22 15:30:34,352 - __main__ - INFO - 从环境变量加载: DEEPSEEK_API_KEY
+2025-07-22 15:30:34,352 - __main__ - INFO - 🚀 开始初始化RAG系统...
+2025-07-22 15:30:34,352 - __main__ - WARNING - ⚠️ DeepSeek API连接测试失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 15:30:34,352 - __main__ - INFO - ✅ DeepSeek客户端初始化完成
+2025-07-22 15:30:34,352 - __main__ - INFO - ✅ Google搜索通道初始化完成
+2025-07-22 15:30:34,949 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:30:34,952 - DynamicVectorStore - INFO - 集合已存在: rag_documents
+2025-07-22 15:30:34,952 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:30:34,952 - __main__ - INFO - ✅ 向量存储初始化完成
+2025-07-22 15:30:34,952 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:30:34,952 - __main__ - INFO - ✅ MCP处理器初始化完成
+2025-07-22 15:30:34,954 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:30:34,955 - DynamicVectorStore - INFO - 集合已存在: dynamic_search_results
+2025-07-22 15:30:34,955 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:30:34,955 - VectorStoreManager - INFO - 添加向量存储: dynamic
+2025-07-22 15:30:34,957 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:30:34,958 - DynamicVectorStore - INFO - 集合已存在: local_knowledge
+2025-07-22 15:30:34,958 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:30:34,958 - VectorStoreManager - INFO - 添加向量存储: local
+2025-07-22 15:30:34,958 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:30:34,958 - EnhancedRAGProcessor - INFO - 增强RAG处理器初始化完成
+2025-07-22 15:30:34,958 - __main__ - INFO - ✅ 增强RAG处理器初始化完成
+2025-07-22 15:30:34,958 - __main__ - INFO - 🎉 RAG系统初始化完成！
+2025-07-22 15:30:34,958 - __main__ - INFO - 🧪 开始系统测试...
+2025-07-22 15:30:34,959 - __main__ - INFO - 测试查询: 人工智能的发展历史 (factual)
+2025-07-22 15:30:34,959 - EnhancedRAGProcessor - INFO - 🔍 查询类型: factual
+2025-07-22 15:30:34,960 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-07-22 15:30:34,960 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-07-22 15:30:40,545 - EnhancedRAGProcessor - ERROR - 查询处理失败: name 'QueryType' is not defined
+2025-07-22 15:30:40,545 - __main__ - INFO - ✅ 回答: 抱歉，处理您的查询时出现错误: name 'QueryType' is not defined...
+2025-07-22 15:30:40,545 - __main__ - INFO - 测试查询: 机器学习和深度学习的区别 (analytical)
+2025-07-22 15:30:40,546 - EnhancedRAGProcessor - INFO - 🔍 查询类型: analytical
+2025-07-22 15:30:40,579 - EnhancedRAGProcessor - INFO - 🌐 需要搜索引擎查询: 最高相似度不足 (0.459 < 0.7)
+2025-07-22 15:30:40,580 - MCPProcessor - INFO - 处理查询: 机器学习和深度学习的区别
+2025-07-22 15:30:40,580 - GoogleSearchChannel - INFO - 开始Google API搜索: 机器学习和深度学习的区别
+2025-07-22 15:32:28,588 - __main__ - INFO - 配置文件加载成功: config.json
+2025-07-22 15:32:28,588 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
+2025-07-22 15:32:28,588 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
+2025-07-22 15:32:28,588 - __main__ - INFO - 从环境变量加载: DEEPSEEK_API_KEY
+2025-07-22 15:32:28,588 - __main__ - INFO - 🚀 开始初始化RAG系统...
+2025-07-22 15:32:28,588 - __main__ - WARNING - ⚠️ DeepSeek API连接测试失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 15:32:28,588 - __main__ - INFO - ✅ DeepSeek客户端初始化完成
+2025-07-22 15:32:28,588 - __main__ - INFO - ✅ Google搜索通道初始化完成
+2025-07-22 15:32:29,161 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:32:29,164 - DynamicVectorStore - INFO - 集合已存在: rag_documents
+2025-07-22 15:32:29,164 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:32:29,164 - __main__ - INFO - ✅ 向量存储初始化完成
+2025-07-22 15:32:29,164 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:32:29,165 - __main__ - INFO - ✅ MCP处理器初始化完成
+2025-07-22 15:32:29,167 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:32:29,168 - DynamicVectorStore - INFO - 集合已存在: dynamic_search_results
+2025-07-22 15:32:29,168 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:32:29,168 - VectorStoreManager - INFO - 添加向量存储: dynamic
+2025-07-22 15:32:29,170 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:32:29,171 - DynamicVectorStore - INFO - 集合已存在: local_knowledge
+2025-07-22 15:32:29,171 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:32:29,171 - VectorStoreManager - INFO - 添加向量存储: local
+2025-07-22 15:32:29,171 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:32:29,171 - EnhancedRAGProcessor - INFO - 增强RAG处理器初始化完成
+2025-07-22 15:32:29,171 - __main__ - INFO - ✅ 增强RAG处理器初始化完成
+2025-07-22 15:32:29,171 - __main__ - INFO - 🎉 RAG系统初始化完成！
+2025-07-22 15:32:29,171 - __main__ - INFO - 🧪 开始系统测试...
+2025-07-22 15:32:29,171 - __main__ - INFO - 测试查询: 人工智能的发展历史 (factual)
+2025-07-22 15:32:29,171 - EnhancedRAGProcessor - INFO - 🔍 查询类型: factual
+2025-07-22 15:32:29,173 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-07-22 15:32:29,173 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-07-22 15:32:58,997 - __main__ - INFO - 配置文件加载成功: config.json
+2025-07-22 15:32:58,997 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
+2025-07-22 15:32:58,997 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
+2025-07-22 15:32:58,997 - __main__ - INFO - 从环境变量加载: DEEPSEEK_API_KEY
+2025-07-22 15:32:58,997 - __main__ - INFO - 🚀 开始初始化RAG系统...
+2025-07-22 15:32:58,997 - __main__ - WARNING - ⚠️ DeepSeek API连接测试失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 15:32:58,997 - __main__ - INFO - ✅ DeepSeek客户端初始化完成
+2025-07-22 15:32:58,997 - __main__ - INFO - ✅ Google搜索通道初始化完成
+2025-07-22 15:32:59,589 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:32:59,593 - DynamicVectorStore - INFO - 集合已存在: rag_documents
+2025-07-22 15:32:59,593 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:32:59,593 - __main__ - INFO - ✅ 向量存储初始化完成
+2025-07-22 15:32:59,593 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:32:59,593 - __main__ - INFO - ✅ MCP处理器初始化完成
+2025-07-22 15:32:59,596 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:32:59,596 - DynamicVectorStore - INFO - 集合已存在: dynamic_search_results
+2025-07-22 15:32:59,597 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:32:59,597 - VectorStoreManager - INFO - 添加向量存储: dynamic
+2025-07-22 15:32:59,599 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:32:59,599 - DynamicVectorStore - INFO - 集合已存在: local_knowledge
+2025-07-22 15:32:59,599 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:32:59,599 - VectorStoreManager - INFO - 添加向量存储: local
+2025-07-22 15:32:59,599 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:32:59,600 - EnhancedRAGProcessor - INFO - 增强RAG处理器初始化完成
+2025-07-22 15:32:59,600 - __main__ - INFO - ✅ 增强RAG处理器初始化完成
+2025-07-22 15:32:59,600 - __main__ - INFO - 🎉 RAG系统初始化完成！
+2025-07-22 15:32:59,600 - __main__ - INFO - 🧪 开始系统测试...
+2025-07-22 15:32:59,600 - __main__ - INFO - 测试查询: 人工智能的发展历史 (factual)
+2025-07-22 15:32:59,600 - EnhancedRAGProcessor - INFO - 🔍 查询类型: factual
+2025-07-22 15:32:59,601 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-07-22 15:32:59,601 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-07-22 15:33:52,136 - __main__ - INFO - 配置文件加载成功: config.json
+2025-07-22 15:33:52,136 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
+2025-07-22 15:33:52,136 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
+2025-07-22 15:33:52,136 - __main__ - INFO - 从环境变量加载: DEEPSEEK_API_KEY
+2025-07-22 15:33:52,136 - __main__ - INFO - 🚀 开始初始化RAG系统...
+2025-07-22 15:33:52,137 - __main__ - WARNING - ⚠️ DeepSeek API连接测试失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 15:33:52,137 - __main__ - INFO - ✅ DeepSeek客户端初始化完成
+2025-07-22 15:33:52,137 - __main__ - INFO - ✅ Google搜索通道初始化完成
+2025-07-22 15:33:52,720 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:33:52,721 - DynamicVectorStore - INFO - 集合已存在: rag_documents
+2025-07-22 15:33:52,721 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:33:52,722 - __main__ - INFO - ✅ 向量存储初始化完成
+2025-07-22 15:33:52,722 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:33:52,722 - __main__ - INFO - ✅ MCP处理器初始化完成
+2025-07-22 15:33:52,726 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:33:52,727 - DynamicVectorStore - INFO - 集合已存在: dynamic_search_results
+2025-07-22 15:33:52,727 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:33:52,727 - VectorStoreManager - INFO - 添加向量存储: dynamic
+2025-07-22 15:33:52,730 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:33:52,731 - DynamicVectorStore - INFO - 集合已存在: local_knowledge
+2025-07-22 15:33:52,731 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:33:52,731 - VectorStoreManager - INFO - 添加向量存储: local
+2025-07-22 15:33:52,731 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:33:52,731 - EnhancedRAGProcessor - INFO - 增强RAG处理器初始化完成
+2025-07-22 15:33:52,731 - __main__ - INFO - ✅ 增强RAG处理器初始化完成
+2025-07-22 15:33:52,731 - __main__ - INFO - 🎉 RAG系统初始化完成！
+2025-07-22 15:33:52,731 - __main__ - INFO - 🧪 开始系统测试...
+2025-07-22 15:33:52,732 - __main__ - INFO - 测试查询: 人工智能的发展历史 (factual)
+2025-07-22 15:33:52,732 - EnhancedRAGProcessor - INFO - 🔍 查询类型: factual
+2025-07-22 15:33:52,733 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-07-22 15:33:52,733 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-07-22 15:37:33,691 - DynamicVectorStore - ERROR - 相似性搜索失败: <MilvusException: (code=<bound method _InactiveRpcError.code of <_InactiveRpcError of RPC that terminated with:
+	status = StatusCode.UNAVAILABLE
+	details = "failed to connect to all addresses; last error: UNKNOWN: unix:/tmp/tmpnymtoavd_milvus_rag.db.sock: connect: Connection refused (111)"
+	debug_error_string = "UNKNOWN:Error received from peer  {grpc_message:"failed to connect to all addresses; last error: UNKNOWN: unix:/tmp/tmpnymtoavd_milvus_rag.db.sock: connect: Connection refused (111)", grpc_status:14, created_time:"2025-07-22T15:37:33.69119247+08:00"}"
+>>, message=[search] Retry run out of 75 retry times, message=failed to connect to all addresses; last error: UNKNOWN: unix:/tmp/tmpnymtoavd_milvus_rag.db.sock: connect: Connection refused (111))>
+2025-07-22 15:39:09,946 - __main__ - INFO - 配置文件加载成功: config.json
+2025-07-22 15:39:09,946 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
+2025-07-22 15:39:09,946 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
+2025-07-22 15:39:09,946 - __main__ - INFO - 从环境变量加载: DEEPSEEK_API_KEY
+2025-07-22 15:39:09,946 - __main__ - INFO - 🚀 开始初始化RAG系统...
+2025-07-22 15:39:09,946 - __main__ - WARNING - ⚠️ DeepSeek API连接测试失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 15:39:09,946 - __main__ - INFO - ✅ DeepSeek客户端初始化完成
+2025-07-22 15:39:09,946 - __main__ - INFO - ✅ Google搜索通道初始化完成
+2025-07-22 15:39:10,519 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:39:10,520 - DynamicVectorStore - INFO - 集合已存在: rag_documents
+2025-07-22 15:39:10,520 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:39:10,520 - __main__ - INFO - ✅ 向量存储初始化完成
+2025-07-22 15:39:10,520 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:39:10,520 - __main__ - INFO - ✅ MCP处理器初始化完成
+2025-07-22 15:39:10,522 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:39:10,522 - DynamicVectorStore - INFO - 集合已存在: dynamic_search_results
+2025-07-22 15:39:10,522 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:39:10,522 - VectorStoreManager - INFO - 添加向量存储: dynamic
+2025-07-22 15:39:10,524 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:39:10,525 - DynamicVectorStore - INFO - 集合已存在: local_knowledge
+2025-07-22 15:39:10,525 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:39:10,525 - VectorStoreManager - INFO - 添加向量存储: local
+2025-07-22 15:39:10,525 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:39:10,525 - EnhancedRAGProcessor - INFO - 增强RAG处理器初始化完成
+2025-07-22 15:39:10,525 - __main__ - INFO - ✅ 增强RAG处理器初始化完成
+2025-07-22 15:39:10,525 - __main__ - INFO - 🎉 RAG系统初始化完成！
+2025-07-22 15:39:10,525 - __main__ - INFO - 🧪 开始系统测试...
+2025-07-22 15:39:10,525 - __main__ - INFO - 测试查询: 人工智能的发展历史 (factual)
+2025-07-22 15:39:10,525 - EnhancedRAGProcessor - INFO - 🔍 查询类型: factual
+2025-07-22 15:39:10,526 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-07-22 15:39:10,526 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-07-22 15:40:07,441 - __main__ - INFO - 配置文件加载成功: config.json
+2025-07-22 15:40:07,441 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
+2025-07-22 15:40:07,441 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
+2025-07-22 15:40:07,441 - __main__ - INFO - 从环境变量加载: DEEPSEEK_API_KEY
+2025-07-22 15:40:07,441 - __main__ - INFO - 🚀 开始初始化RAG系统...
+2025-07-22 15:40:07,441 - __main__ - WARNING - ⚠️ DeepSeek API连接测试失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 15:40:07,442 - __main__ - INFO - ✅ DeepSeek客户端初始化完成
+2025-07-22 15:40:07,442 - __main__ - INFO - ✅ Google搜索通道初始化完成
+2025-07-22 15:40:08,053 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:40:08,054 - DynamicVectorStore - INFO - 集合已存在: rag_documents
+2025-07-22 15:40:08,054 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:40:08,054 - __main__ - INFO - ✅ 向量存储初始化完成
+2025-07-22 15:40:08,054 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:40:08,054 - __main__ - INFO - ✅ MCP处理器初始化完成
+2025-07-22 15:40:08,057 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:40:08,058 - DynamicVectorStore - INFO - 集合已存在: dynamic_search_results
+2025-07-22 15:40:08,059 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:40:08,059 - VectorStoreManager - INFO - 添加向量存储: dynamic
+2025-07-22 15:40:08,062 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 15:40:08,063 - DynamicVectorStore - INFO - 集合已存在: local_knowledge
+2025-07-22 15:40:08,063 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 15:40:08,064 - VectorStoreManager - INFO - 添加向量存储: local
+2025-07-22 15:40:08,064 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 15:40:08,064 - EnhancedRAGProcessor - INFO - 增强RAG处理器初始化完成
+2025-07-22 15:40:08,064 - __main__ - INFO - ✅ 增强RAG处理器初始化完成
+2025-07-22 15:40:08,064 - __main__ - INFO - 🎉 RAG系统初始化完成！
+2025-07-22 15:40:08,065 - __main__ - INFO - 🧪 开始系统测试...
+2025-07-22 15:40:08,065 - __main__ - INFO - 测试查询: 人工智能的发展历史 (factual)
+2025-07-22 15:40:08,065 - EnhancedRAGProcessor - INFO - 🔍 查询类型: factual
+2025-07-22 15:40:08,067 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-07-22 15:40:08,067 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-07-22 16:46:51,205 - __main__ - INFO - 配置文件加载成功: config.json
+2025-07-22 16:46:51,205 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
+2025-07-22 16:46:51,205 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
+2025-07-22 16:46:51,205 - __main__ - INFO - 从环境变量加载: DEEPSEEK_API_KEY
+2025-07-22 16:46:51,205 - __main__ - INFO - 🚀 开始初始化RAG系统...
+2025-07-22 16:46:51,205 - __main__ - WARNING - ⚠️ DeepSeek API连接测试失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 16:46:51,205 - __main__ - INFO - ✅ DeepSeek客户端初始化完成
+2025-07-22 16:46:51,205 - __main__ - INFO - ✅ Google搜索通道初始化完成
+2025-07-22 16:46:51,776 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 16:46:51,777 - DynamicVectorStore - INFO - 集合已存在: rag_documents
+2025-07-22 16:46:51,777 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 16:46:51,777 - __main__ - INFO - ✅ 向量存储初始化完成
+2025-07-22 16:46:51,777 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 16:46:51,777 - __main__ - INFO - ✅ MCP处理器初始化完成
+2025-07-22 16:46:51,779 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 16:46:51,780 - DynamicVectorStore - INFO - 集合已存在: dynamic_search_results
+2025-07-22 16:46:51,780 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 16:46:51,780 - VectorStoreManager - INFO - 添加向量存储: dynamic
+2025-07-22 16:46:51,782 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 16:46:51,783 - DynamicVectorStore - INFO - 集合已存在: local_knowledge
+2025-07-22 16:46:51,783 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 16:46:51,783 - VectorStoreManager - INFO - 添加向量存储: local
+2025-07-22 16:46:51,783 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 16:46:51,783 - EnhancedRAGProcessor - INFO - 增强RAG处理器初始化完成
+2025-07-22 16:46:51,783 - __main__ - INFO - ✅ 增强RAG处理器初始化完成
+2025-07-22 16:46:51,783 - __main__ - INFO - 🎉 RAG系统初始化完成！
+2025-07-22 16:46:51,783 - __main__ - INFO - 🧪 开始系统测试...
+2025-07-22 16:46:51,783 - __main__ - INFO - 测试查询: 人工智能的发展历史 (factual)
+2025-07-22 16:46:51,783 - EnhancedRAGProcessor - INFO - 🔍 查询类型: factual
+2025-07-22 16:46:51,784 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-07-22 16:46:51,785 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-07-22 16:46:57,531 - EnhancedRAGProcessor - ERROR - 查询处理失败: name 'QueryType' is not defined
+2025-07-22 16:46:57,531 - __main__ - INFO - ✅ 回答: 抱歉，处理您的查询时出现错误: name 'QueryType' is not defined...
+2025-07-22 16:46:57,531 - __main__ - INFO - 测试查询: 机器学习和深度学习的区别 (analytical)
+2025-07-22 16:46:57,531 - EnhancedRAGProcessor - INFO - 🔍 查询类型: analytical
+2025-07-22 16:46:57,544 - EnhancedRAGProcessor - INFO - 🌐 需要搜索引擎查询: 最高相似度不足 (0.459 < 0.7)
+2025-07-22 16:46:57,544 - MCPProcessor - INFO - 处理查询: 机器学习和深度学习的区别
+2025-07-22 16:46:57,544 - GoogleSearchChannel - INFO - 开始Google API搜索: 机器学习和深度学习的区别
+2025-07-22 16:48:59,183 - __main__ - INFO - 配置文件加载成功: config.json
+2025-07-22 16:48:59,183 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
+2025-07-22 16:48:59,183 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
+2025-07-22 16:48:59,183 - __main__ - INFO - 从环境变量加载: DEEPSEEK_API_KEY
+2025-07-22 16:48:59,183 - __main__ - INFO - 🚀 开始初始化RAG系统...
+2025-07-22 16:48:59,183 - __main__ - WARNING - ⚠️ DeepSeek API连接测试失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 16:48:59,183 - __main__ - INFO - ✅ DeepSeek客户端初始化完成
+2025-07-22 16:48:59,183 - __main__ - INFO - ✅ Google搜索通道初始化完成
+2025-07-22 16:48:59,759 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 16:48:59,760 - DynamicVectorStore - INFO - 集合已存在: rag_documents
+2025-07-22 16:48:59,760 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 16:48:59,760 - __main__ - INFO - ✅ 向量存储初始化完成
+2025-07-22 16:48:59,760 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 16:48:59,760 - __main__ - INFO - ✅ MCP处理器初始化完成
+2025-07-22 16:48:59,762 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 16:48:59,763 - DynamicVectorStore - INFO - 集合已存在: dynamic_search_results
+2025-07-22 16:48:59,763 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 16:48:59,763 - VectorStoreManager - INFO - 添加向量存储: dynamic
+2025-07-22 16:48:59,765 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 16:48:59,765 - DynamicVectorStore - INFO - 集合已存在: local_knowledge
+2025-07-22 16:48:59,765 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 16:48:59,765 - VectorStoreManager - INFO - 添加向量存储: local
+2025-07-22 16:48:59,765 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 16:48:59,765 - EnhancedRAGProcessor - INFO - 增强RAG处理器初始化完成
+2025-07-22 16:48:59,765 - __main__ - INFO - ✅ 增强RAG处理器初始化完成
+2025-07-22 16:48:59,766 - __main__ - INFO - 🎉 RAG系统初始化完成！
+2025-07-22 16:48:59,766 - __main__ - INFO - 🧪 开始系统测试...
+2025-07-22 16:48:59,766 - __main__ - INFO - 测试查询: 人工智能的发展历史 (factual)
+2025-07-22 16:48:59,766 - EnhancedRAGProcessor - INFO - 🔍 查询类型: factual
+2025-07-22 16:48:59,767 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-07-22 16:48:59,767 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-07-22 16:49:05,309 - EnhancedRAGProcessor - INFO - ✅ 使用向量数据库结果: 向量数据库有足够的高质量结果 (2 个，最高相似度: 0.801)
+2025-07-22 16:49:05,310 - EnhancedRAGProcessor - ERROR - LLM调用失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 16:49:05,310 - EnhancedRAGProcessor - INFO - ✅ 查询处理完成，耗时: 5.54s
+2025-07-22 16:49:05,310 - __main__ - INFO - ✅ 回答: 基于搜索到的信息：
+
+参考资料 1:
+... 人工智能。如用神经网络模型输入雷达图像数据预测天气：. 二、人工智能发展史. 从始至此，人工智能(AI)便在充满未知的道路探索，曲折起伏，我们可将这段发展...
+2025-07-22 16:49:05,310 - __main__ - INFO - 测试查询: 机器学习和深度学习的区别 (analytical)
+2025-07-22 16:49:05,310 - EnhancedRAGProcessor - INFO - 🔍 查询类型: analytical
+2025-07-22 16:49:05,337 - EnhancedRAGProcessor - INFO - 🌐 需要搜索引擎查询: 最高相似度不足 (0.459 < 0.7)
+2025-07-22 16:49:05,338 - MCPProcessor - INFO - 处理查询: 机器学习和深度学习的区别
+2025-07-22 16:49:05,338 - GoogleSearchChannel - INFO - 开始Google API搜索: 机器学习和深度学习的区别
+2025-07-22 19:29:25,390 - __main__ - INFO - 配置文件加载成功: config.json
+2025-07-22 19:29:25,390 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
+2025-07-22 19:29:25,390 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
+2025-07-22 19:29:25,390 - __main__ - INFO - 从环境变量加载: DEEPSEEK_API_KEY
+2025-07-22 19:29:25,390 - __main__ - INFO - 🚀 开始初始化RAG系统...
+2025-07-22 19:29:25,390 - __main__ - WARNING - ⚠️ DeepSeek API连接测试失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:29:25,390 - __main__ - INFO - ✅ DeepSeek客户端初始化完成
+2025-07-22 19:29:25,391 - __main__ - INFO - ✅ Google搜索通道初始化完成
+2025-07-22 19:29:25,992 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 19:29:25,993 - DynamicVectorStore - INFO - 集合已存在: rag_documents
+2025-07-22 19:29:25,993 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 19:29:25,993 - __main__ - INFO - ✅ 向量存储初始化完成
+2025-07-22 19:29:25,993 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 19:29:25,993 - __main__ - INFO - ✅ MCP处理器初始化完成
+2025-07-22 19:29:25,996 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 19:29:25,997 - DynamicVectorStore - INFO - 集合已存在: dynamic_search_results
+2025-07-22 19:29:25,997 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 19:29:25,997 - VectorStoreManager - INFO - 添加向量存储: dynamic
+2025-07-22 19:29:25,999 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 19:29:26,000 - DynamicVectorStore - INFO - 集合已存在: local_knowledge
+2025-07-22 19:29:26,000 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 19:29:26,000 - VectorStoreManager - INFO - 添加向量存储: local
+2025-07-22 19:29:26,000 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 19:29:26,000 - EnhancedRAGProcessor - INFO - 增强RAG处理器初始化完成
+2025-07-22 19:29:26,001 - __main__ - INFO - ✅ 增强RAG处理器初始化完成
+2025-07-22 19:29:26,001 - __main__ - INFO - 🎉 RAG系统初始化完成！
+2025-07-22 19:29:26,001 - __main__ - INFO - 🧪 开始系统测试...
+2025-07-22 19:29:26,001 - __main__ - INFO - 测试查询: 人工智能的发展历史 (factual)
+2025-07-22 19:29:26,001 - EnhancedRAGProcessor - INFO - 🔍 查询类型: factual
+2025-07-22 19:29:26,002 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-07-22 19:29:26,002 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-07-22 19:29:31,914 - EnhancedRAGProcessor - INFO - ✅ 使用向量数据库结果: 向量数据库有足够的高质量结果 (2 个，最高相似度: 0.801)
+2025-07-22 19:29:31,914 - EnhancedRAGProcessor - ERROR - LLM调用失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:29:31,914 - EnhancedRAGProcessor - INFO - ✅ 查询处理完成，耗时: 5.91s
+2025-07-22 19:29:31,914 - __main__ - INFO - ✅ 回答: 基于搜索到的信息：
+
+参考资料 1:
+... 人工智能。如用神经网络模型输入雷达图像数据预测天气：. 二、人工智能发展史. 从始至此，人工智能(AI)便在充满未知的道路探索，曲折起伏，我们可将这段发展...
+2025-07-22 19:29:31,914 - __main__ - INFO - 测试查询: 机器学习和深度学习的区别 (analytical)
+2025-07-22 19:29:31,914 - EnhancedRAGProcessor - INFO - 🔍 查询类型: analytical
+2025-07-22 19:29:31,927 - EnhancedRAGProcessor - INFO - 🌐 需要搜索引擎查询: 最高相似度不足 (0.459 < 0.7)
+2025-07-22 19:29:31,927 - MCPProcessor - INFO - 处理查询: 机器学习和深度学习的区别
+2025-07-22 19:29:31,927 - GoogleSearchChannel - INFO - 开始Google API搜索: 机器学习和深度学习的区别
+2025-07-22 19:29:47,942 - GoogleSearchChannel - INFO - Google API搜索完成，找到 10 个结果
+2025-07-22 19:29:48,269 - DynamicVectorStore - INFO - 成功存储 0 个文档
+2025-07-22 19:29:48,269 - EnhancedRAGProcessor - INFO - 存储了 0 个搜索结果
+2025-07-22 19:29:48,269 - EnhancedRAGProcessor - INFO - 💾 存储了 10 个新的搜索结果
+2025-07-22 19:29:48,269 - EnhancedRAGProcessor - ERROR - LLM调用失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:29:48,269 - EnhancedRAGProcessor - INFO - ✅ 查询处理完成，耗时: 16.35s
+2025-07-22 19:29:48,269 - __main__ - INFO - ✅ 回答: 基于搜索到的信息：
+
+参考资料 1:
+什么是云计算？ 云计算概念中心 Machine Learning 机器学习与深度学习之间有什么区别？ 创建 AWS 账户 了解机器学习免费服务 在云中免费构建、部...
+2025-07-22 19:29:48,269 - __main__ - INFO - 测试查询: 请写一个关于AI的小故事 (creative)
+2025-07-22 19:29:48,269 - EnhancedRAGProcessor - INFO - 🔍 查询类型: creative
+2025-07-22 19:29:48,284 - EnhancedRAGProcessor - INFO - 🌐 需要搜索引擎查询: 最高相似度不足 (0.600 < 0.7)
+2025-07-22 19:29:48,284 - MCPProcessor - INFO - 处理查询: 请写一个关于AI的小故事
+2025-07-22 19:29:48,284 - GoogleSearchChannel - INFO - 开始Google API搜索: 请写一个关于AI的小故事
+2025-07-22 19:30:08,678 - GoogleSearchChannel - INFO - Google API搜索完成，找到 10 个结果
+2025-07-22 19:30:09,032 - DynamicVectorStore - INFO - 成功存储 2 个文档
+2025-07-22 19:30:09,033 - EnhancedRAGProcessor - INFO - 存储了 2 个搜索结果
+2025-07-22 19:30:09,033 - EnhancedRAGProcessor - INFO - 💾 存储了 10 个新的搜索结果
+2025-07-22 19:30:09,033 - EnhancedRAGProcessor - ERROR - LLM调用失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:30:09,033 - EnhancedRAGProcessor - INFO - ✅ 查询处理完成，耗时: 20.76s
+2025-07-22 19:30:09,033 - __main__ - INFO - ✅ 回答: 基于搜索到的信息：
+
+参考资料 1:
+浏览 透过大观园一窥人类共同命运 从古代文学经典获得当代共鸣 精选 透过大观园一窥人类共同命运 从古代文学经典获得当代共鸣 各科室医生畅聊健康话题 为生活注入一剂...
+2025-07-22 19:30:09,033 - __main__ - INFO - 🎉 系统测试完成
+2025-07-22 19:30:48,123 - __main__ - INFO - 配置文件加载成功: config.json
+2025-07-22 19:30:48,123 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
+2025-07-22 19:30:48,124 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
+2025-07-22 19:30:48,124 - __main__ - INFO - 从环境变量加载: DEEPSEEK_API_KEY
+2025-07-22 19:30:48,124 - __main__ - INFO - 🚀 开始初始化RAG系统...
+2025-07-22 19:30:48,124 - __main__ - WARNING - ⚠️ DeepSeek API连接测试失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:30:48,124 - __main__ - INFO - ✅ DeepSeek客户端初始化完成
+2025-07-22 19:30:48,124 - __main__ - INFO - ✅ Google搜索通道初始化完成
+2025-07-22 19:30:48,706 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 19:30:48,710 - DynamicVectorStore - INFO - 集合已存在: rag_documents
+2025-07-22 19:30:48,710 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 19:30:48,710 - __main__ - INFO - ✅ 向量存储初始化完成
+2025-07-22 19:30:48,710 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 19:30:48,710 - __main__ - INFO - ✅ MCP处理器初始化完成
+2025-07-22 19:30:48,713 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 19:30:48,714 - DynamicVectorStore - INFO - 集合已存在: dynamic_search_results
+2025-07-22 19:30:48,714 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 19:30:48,714 - VectorStoreManager - INFO - 添加向量存储: dynamic
+2025-07-22 19:30:48,716 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 19:30:48,717 - DynamicVectorStore - INFO - 集合已存在: local_knowledge
+2025-07-22 19:30:48,717 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 19:30:48,717 - VectorStoreManager - INFO - 添加向量存储: local
+2025-07-22 19:30:48,717 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 19:30:48,717 - EnhancedRAGProcessor - INFO - 增强RAG处理器初始化完成
+2025-07-22 19:30:48,717 - __main__ - INFO - ✅ 增强RAG处理器初始化完成
+2025-07-22 19:30:48,717 - __main__ - INFO - 🎉 RAG系统初始化完成！
+2025-07-22 19:30:48,718 - __main__ - INFO - 🧪 开始系统测试...
+2025-07-22 19:30:48,718 - __main__ - INFO - 测试查询: 人工智能的发展历史 (factual)
+2025-07-22 19:30:48,718 - EnhancedRAGProcessor - INFO - 🔍 查询类型: factual
+2025-07-22 19:30:48,719 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-07-22 19:30:48,719 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-07-22 19:30:54,485 - EnhancedRAGProcessor - INFO - ✅ 使用向量数据库结果: 向量数据库有足够的高质量结果 (2 个，最高相似度: 0.801)
+2025-07-22 19:30:54,485 - EnhancedRAGProcessor - ERROR - LLM调用失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:30:54,485 - EnhancedRAGProcessor - INFO - ✅ 查询处理完成，耗时: 5.77s
+2025-07-22 19:30:54,485 - __main__ - INFO - ✅ 回答: 基于搜索到的信息：
+
+参考资料 1:
+... 人工智能。如用神经网络模型输入雷达图像数据预测天气：. 二、人工智能发展史. 从始至此，人工智能(AI)便在充满未知的道路探索，曲折起伏，我们可将这段发展...
+2025-07-22 19:30:54,486 - __main__ - INFO - 测试查询: 机器学习和深度学习的区别 (analytical)
+2025-07-22 19:30:54,486 - EnhancedRAGProcessor - INFO - 🔍 查询类型: analytical
+2025-07-22 19:30:54,517 - EnhancedRAGProcessor - INFO - 🌐 需要搜索引擎查询: 最高相似度不足 (0.459 < 0.7)
+2025-07-22 19:30:54,517 - MCPProcessor - INFO - 处理查询: 机器学习和深度学习的区别
+2025-07-22 19:30:54,517 - GoogleSearchChannel - INFO - 开始Google API搜索: 机器学习和深度学习的区别
+2025-07-22 19:31:04,373 - GoogleSearchChannel - INFO - Google API搜索完成，找到 10 个结果
+2025-07-22 19:31:04,725 - DynamicVectorStore - INFO - 成功存储 0 个文档
+2025-07-22 19:31:04,725 - EnhancedRAGProcessor - INFO - 存储了 0 个搜索结果
+2025-07-22 19:31:04,725 - EnhancedRAGProcessor - INFO - 💾 存储了 10 个新的搜索结果
+2025-07-22 19:31:04,726 - EnhancedRAGProcessor - ERROR - LLM调用失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:31:04,726 - EnhancedRAGProcessor - INFO - ✅ 查询处理完成，耗时: 10.24s
+2025-07-22 19:31:04,726 - __main__ - INFO - ✅ 回答: 基于搜索到的信息：
+
+参考资料 1:
+什么是云计算？ 云计算概念中心 Machine Learning 机器学习与深度学习之间有什么区别？ 创建 AWS 账户 了解机器学习免费服务 在云中免费构建、部...
+2025-07-22 19:31:04,726 - __main__ - INFO - 测试查询: 请写一个关于AI的小故事 (creative)
+2025-07-22 19:31:04,726 - EnhancedRAGProcessor - INFO - 🔍 查询类型: creative
+2025-07-22 19:31:04,747 - EnhancedRAGProcessor - INFO - 🌐 需要搜索引擎查询: 最高相似度不足 (0.600 < 0.7)
+2025-07-22 19:31:04,747 - MCPProcessor - INFO - 处理查询: 请写一个关于AI的小故事
+2025-07-22 19:31:04,748 - GoogleSearchChannel - INFO - 开始Google API搜索: 请写一个关于AI的小故事
+2025-07-22 19:31:19,235 - GoogleSearchChannel - INFO - Google API搜索完成，找到 10 个结果
+2025-07-22 19:31:19,452 - DynamicVectorStore - INFO - 成功存储 1 个文档
+2025-07-22 19:31:19,452 - EnhancedRAGProcessor - INFO - 存储了 1 个搜索结果
+2025-07-22 19:31:19,452 - EnhancedRAGProcessor - INFO - 💾 存储了 10 个新的搜索结果
+2025-07-22 19:31:19,453 - EnhancedRAGProcessor - ERROR - LLM调用失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:31:19,453 - EnhancedRAGProcessor - INFO - ✅ 查询处理完成，耗时: 14.73s
+2025-07-22 19:31:19,453 - __main__ - INFO - ✅ 回答: 基于搜索到的信息：
+
+参考资料 1:
+浏览 透过大观园一窥人类共同命运 从古代文学经典获得当代共鸣 精选 透过大观园一窥人类共同命运 从古代文学经典获得当代共鸣 各科室医生畅聊健康话题 为生活注入一剂...
+2025-07-22 19:31:19,453 - __main__ - INFO - 🎉 系统测试完成
+2025-07-22 19:50:10,854 - __main__ - INFO - 配置文件加载成功: config.json
+2025-07-22 19:50:10,854 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
+2025-07-22 19:50:10,854 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
+2025-07-22 19:50:10,854 - __main__ - INFO - 从环境变量加载: DEEPSEEK_API_KEY
+2025-07-22 19:50:10,854 - __main__ - INFO - 🚀 开始初始化RAG系统...
+2025-07-22 19:50:10,855 - __main__ - WARNING - ⚠️ DeepSeek API连接测试失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:50:10,855 - __main__ - INFO - ✅ DeepSeek客户端初始化完成
+2025-07-22 19:50:10,855 - __main__ - INFO - ✅ Google搜索通道初始化完成
+2025-07-22 19:50:11,435 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 19:50:11,439 - DynamicVectorStore - INFO - 集合已存在: rag_documents
+2025-07-22 19:50:11,439 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 19:50:11,439 - __main__ - INFO - ✅ 向量存储初始化完成
+2025-07-22 19:50:11,439 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 19:50:11,439 - __main__ - INFO - ✅ MCP处理器初始化完成
+2025-07-22 19:50:11,442 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 19:50:11,443 - DynamicVectorStore - INFO - 集合已存在: dynamic_search_results
+2025-07-22 19:50:11,443 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 19:50:11,443 - VectorStoreManager - INFO - 添加向量存储: dynamic
+2025-07-22 19:50:11,445 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 19:50:11,446 - DynamicVectorStore - INFO - 集合已存在: local_knowledge
+2025-07-22 19:50:11,446 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 19:50:11,446 - VectorStoreManager - INFO - 添加向量存储: local
+2025-07-22 19:50:11,446 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 19:50:11,447 - EnhancedRAGProcessor - INFO - 增强RAG处理器初始化完成
+2025-07-22 19:50:11,447 - __main__ - INFO - ✅ 增强RAG处理器初始化完成
+2025-07-22 19:50:11,447 - __main__ - INFO - 🎉 RAG系统初始化完成！
+2025-07-22 19:50:11,447 - __main__ - INFO - 🧪 开始系统测试...
+2025-07-22 19:50:11,447 - __main__ - INFO - 测试查询: 人工智能的发展历史 (factual)
+2025-07-22 19:50:11,447 - EnhancedRAGProcessor - INFO - 🔍 查询类型: factual
+2025-07-22 19:50:11,448 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-07-22 19:50:11,448 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-07-22 19:50:18,574 - EnhancedRAGProcessor - INFO - ✅ 使用向量数据库结果: 向量数据库有足够的高质量结果 (2 个，最高相似度: 0.801)
+2025-07-22 19:50:18,574 - EnhancedRAGProcessor - ERROR - LLM调用失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:50:18,574 - EnhancedRAGProcessor - INFO - ✅ 查询处理完成，耗时: 7.13s
+2025-07-22 19:50:18,574 - __main__ - INFO - ✅ 回答: 基于搜索到的信息：
+
+参考资料 1:
+... 人工智能。如用神经网络模型输入雷达图像数据预测天气：. 二、人工智能发展史. 从始至此，人工智能(AI)便在充满未知的道路探索，曲折起伏，我们可将这段发展...
+2025-07-22 19:50:18,574 - __main__ - INFO - 测试查询: 机器学习和深度学习的区别 (analytical)
+2025-07-22 19:50:18,574 - EnhancedRAGProcessor - INFO - 🔍 查询类型: analytical
+2025-07-22 19:50:18,589 - EnhancedRAGProcessor - INFO - 🌐 需要搜索引擎查询: 最高相似度不足 (0.459 < 0.7)
+2025-07-22 19:50:18,589 - MCPProcessor - INFO - 处理查询: 机器学习和深度学习的区别
+2025-07-22 19:50:18,589 - GoogleSearchChannel - INFO - 开始Google API搜索: 机器学习和深度学习的区别
+2025-07-22 19:50:34,191 - GoogleSearchChannel - INFO - Google API搜索完成，找到 10 个结果
+2025-07-22 19:50:34,510 - DynamicVectorStore - INFO - 成功存储 10 个文档
+2025-07-22 19:50:34,510 - EnhancedRAGProcessor - INFO - 存储了 10 个搜索结果
+2025-07-22 19:50:34,510 - EnhancedRAGProcessor - INFO - 💾 存储了 10 个新的搜索结果
+2025-07-22 19:50:34,510 - EnhancedRAGProcessor - ERROR - LLM调用失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:50:34,510 - EnhancedRAGProcessor - INFO - ✅ 查询处理完成，耗时: 15.94s
+2025-07-22 19:50:34,511 - __main__ - INFO - ✅ 回答: 基于搜索到的信息：
+
+参考资料 1:
+什么是云计算？ 云计算概念中心 Machine Learning 机器学习与深度学习之间有什么区别？ 创建 AWS 账户 了解机器学习免费服务 在云中免费构建、部...
+2025-07-22 19:50:34,511 - __main__ - INFO - 测试查询: 请写一个关于AI的小故事 (creative)
+2025-07-22 19:50:34,511 - EnhancedRAGProcessor - INFO - 🔍 查询类型: creative
+2025-07-22 19:50:34,525 - EnhancedRAGProcessor - INFO - 🌐 需要搜索引擎查询: 最高相似度不足 (0.600 < 0.7)
+2025-07-22 19:50:34,525 - MCPProcessor - INFO - 处理查询: 请写一个关于AI的小故事
+2025-07-22 19:50:34,526 - GoogleSearchChannel - INFO - 开始Google API搜索: 请写一个关于AI的小故事
+2025-07-22 19:50:54,097 - GoogleSearchChannel - INFO - Google API搜索完成，找到 10 个结果
+2025-07-22 19:50:54,308 - DynamicVectorStore - INFO - 成功存储 10 个文档
+2025-07-22 19:50:54,308 - EnhancedRAGProcessor - INFO - 存储了 10 个搜索结果
+2025-07-22 19:50:54,308 - EnhancedRAGProcessor - INFO - 💾 存储了 10 个新的搜索结果
+2025-07-22 19:50:54,308 - EnhancedRAGProcessor - ERROR - LLM调用失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:50:54,308 - EnhancedRAGProcessor - INFO - ✅ 查询处理完成，耗时: 19.80s
+2025-07-22 19:50:54,308 - __main__ - INFO - ✅ 回答: 基于搜索到的信息：
+
+参考资料 1:
+浏览 透过大观园一窥人类共同命运 从古代文学经典获得当代共鸣 精选 透过大观园一窥人类共同命运 从古代文学经典获得当代共鸣 各科室医生畅聊健康话题 为生活注入一剂...
+2025-07-22 19:50:54,308 - __main__ - INFO - 🎉 系统测试完成
+2025-07-22 19:50:58,501 - EnhancedRAGProcessor - INFO - 🔍 查询类型: factual
+2025-07-22 19:50:58,531 - EnhancedRAGProcessor - INFO - 🌐 需要搜索引擎查询: 向量数据库中没有相关结果
+2025-07-22 19:50:58,531 - MCPProcessor - INFO - 处理查询: m.py
+2025-07-22 19:50:58,531 - GoogleSearchChannel - INFO - 开始Google API搜索: m.py
+2025-07-22 19:51:09,054 - __main__ - INFO - 配置文件加载成功: config.json
+2025-07-22 19:51:09,054 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
+2025-07-22 19:51:09,054 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
+2025-07-22 19:51:09,055 - __main__ - INFO - 从环境变量加载: DEEPSEEK_API_KEY
+2025-07-22 19:51:09,055 - __main__ - INFO - 🚀 开始初始化RAG系统...
+2025-07-22 19:51:09,055 - __main__ - WARNING - ⚠️ DeepSeek API连接测试失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:51:09,055 - __main__ - INFO - ✅ DeepSeek客户端初始化完成
+2025-07-22 19:51:09,055 - __main__ - INFO - ✅ Google搜索通道初始化完成
+2025-07-22 19:51:09,631 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 19:51:09,631 - DynamicVectorStore - INFO - 集合已存在: rag_documents
+2025-07-22 19:51:09,631 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 19:51:09,631 - __main__ - INFO - ✅ 向量存储初始化完成
+2025-07-22 19:51:09,632 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 19:51:09,632 - __main__ - INFO - ✅ MCP处理器初始化完成
+2025-07-22 19:51:09,634 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 19:51:09,637 - DynamicVectorStore - INFO - 集合已存在: dynamic_search_results
+2025-07-22 19:51:09,637 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 19:51:09,637 - VectorStoreManager - INFO - 添加向量存储: dynamic
+2025-07-22 19:51:09,640 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 19:51:09,640 - DynamicVectorStore - INFO - 集合已存在: local_knowledge
+2025-07-22 19:51:09,640 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 19:51:09,640 - VectorStoreManager - INFO - 添加向量存储: local
+2025-07-22 19:51:09,640 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 19:51:09,640 - EnhancedRAGProcessor - INFO - 增强RAG处理器初始化完成
+2025-07-22 19:51:09,640 - __main__ - INFO - ✅ 增强RAG处理器初始化完成
+2025-07-22 19:51:09,641 - __main__ - INFO - 🎉 RAG系统初始化完成！
+2025-07-22 19:51:09,641 - __main__ - INFO - 🧪 开始系统测试...
+2025-07-22 19:51:09,641 - __main__ - INFO - 测试查询: 人工智能的发展历史 (factual)
+2025-07-22 19:51:09,641 - EnhancedRAGProcessor - INFO - 🔍 查询类型: factual
+2025-07-22 19:51:09,642 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-07-22 19:51:09,642 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-07-22 19:51:15,368 - EnhancedRAGProcessor - INFO - ✅ 使用向量数据库结果: 向量数据库有足够的高质量结果 (3 个，最高相似度: 0.801)
+2025-07-22 19:51:15,368 - EnhancedRAGProcessor - ERROR - LLM调用失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:51:15,369 - EnhancedRAGProcessor - INFO - ✅ 查询处理完成，耗时: 5.73s
+2025-07-22 19:51:15,369 - __main__ - INFO - ✅ 回答: 基于搜索到的信息：
+
+参考资料 1:
+... 人工智能。如用神经网络模型输入雷达图像数据预测天气：. 二、人工智能发展史. 从始至此，人工智能(AI)便在充满未知的道路探索，曲折起伏，我们可将这段发展...
+2025-07-22 19:51:15,369 - __main__ - INFO - 测试查询: 机器学习和深度学习的区别 (analytical)
+2025-07-22 19:51:15,369 - EnhancedRAGProcessor - INFO - 🔍 查询类型: analytical
+2025-07-22 19:51:15,498 - EnhancedRAGProcessor - INFO - 🌐 需要搜索引擎查询: 最高相似度不足 (0.459 < 0.7)
+2025-07-22 19:51:15,498 - MCPProcessor - INFO - 处理查询: 机器学习和深度学习的区别
+2025-07-22 19:51:15,499 - GoogleSearchChannel - INFO - 开始Google API搜索: 机器学习和深度学习的区别
+2025-07-22 19:52:43,937 - __main__ - INFO - 配置文件加载成功: config.json
+2025-07-22 19:52:43,938 - __main__ - INFO - 从环境变量加载: GOOGLE_API_KEY
+2025-07-22 19:52:43,938 - __main__ - INFO - 从环境变量加载: GOOGLE_SEARCH_ENGINE_ID
+2025-07-22 19:52:43,938 - __main__ - INFO - 从环境变量加载: DEEPSEEK_API_KEY
+2025-07-22 19:52:43,938 - __main__ - INFO - 🚀 开始初始化RAG系统...
+2025-07-22 19:52:43,938 - __main__ - WARNING - ⚠️ DeepSeek API连接测试失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:52:43,938 - __main__ - INFO - ✅ DeepSeek客户端初始化完成
+2025-07-22 19:52:43,938 - __main__ - INFO - ✅ Google搜索通道初始化完成
+2025-07-22 19:52:44,513 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 19:52:44,514 - DynamicVectorStore - INFO - 集合已存在: rag_documents
+2025-07-22 19:52:44,514 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 19:52:44,514 - __main__ - INFO - ✅ 向量存储初始化完成
+2025-07-22 19:52:44,514 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 19:52:44,514 - __main__ - INFO - ✅ MCP处理器初始化完成
+2025-07-22 19:52:44,516 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 19:52:44,517 - DynamicVectorStore - INFO - 集合已存在: dynamic_search_results
+2025-07-22 19:52:44,517 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 19:52:44,517 - VectorStoreManager - INFO - 添加向量存储: dynamic
+2025-07-22 19:52:44,519 - milvus_utils - INFO - 连接到Milvus: ./milvus_rag.db
+2025-07-22 19:52:44,519 - DynamicVectorStore - INFO - 集合已存在: local_knowledge
+2025-07-22 19:52:44,520 - DynamicVectorStore - INFO - Milvus客户端初始化成功
+2025-07-22 19:52:44,520 - VectorStoreManager - INFO - 添加向量存储: local
+2025-07-22 19:52:44,520 - MCPProcessor - INFO - 注册通道: search_engine
+2025-07-22 19:52:44,520 - EnhancedRAGProcessor - INFO - 增强RAG处理器初始化完成
+2025-07-22 19:52:44,520 - __main__ - INFO - ✅ 增强RAG处理器初始化完成
+2025-07-22 19:52:44,520 - __main__ - INFO - 🎉 RAG系统初始化完成！
+2025-07-22 19:52:44,520 - __main__ - INFO - 🧪 开始系统测试...
+2025-07-22 19:52:44,520 - __main__ - INFO - 测试查询: 人工智能的发展历史 (factual)
+2025-07-22 19:52:44,520 - EnhancedRAGProcessor - INFO - 🔍 查询类型: factual
+2025-07-22 19:52:44,521 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-07-22 19:52:44,521 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-07-22 19:52:50,095 - EnhancedRAGProcessor - INFO - ✅ 使用向量数据库结果: 向量数据库有足够的高质量结果 (3 个，最高相似度: 0.801)
+2025-07-22 19:52:50,095 - EnhancedRAGProcessor - ERROR - LLM调用失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:52:50,095 - EnhancedRAGProcessor - INFO - ✅ 查询处理完成，耗时: 5.57s
+2025-07-22 19:52:50,095 - __main__ - INFO - ✅ 回答: 基于搜索到的信息：
+
+参考资料 1:
+... 人工智能。如用神经网络模型输入雷达图像数据预测天气：. 二、人工智能发展史. 从始至此，人工智能(AI)便在充满未知的道路探索，曲折起伏，我们可将这段发展...
+2025-07-22 19:52:50,095 - __main__ - INFO - 测试查询: 机器学习和深度学习的区别 (analytical)
+2025-07-22 19:52:50,095 - EnhancedRAGProcessor - INFO - 🔍 查询类型: analytical
+2025-07-22 19:52:50,162 - EnhancedRAGProcessor - INFO - 🌐 需要搜索引擎查询: 最高相似度不足 (0.459 < 0.7)
+2025-07-22 19:52:50,162 - MCPProcessor - INFO - 处理查询: 机器学习和深度学习的区别
+2025-07-22 19:52:50,163 - GoogleSearchChannel - INFO - 开始Google API搜索: 机器学习和深度学习的区别
+2025-07-22 19:52:59,730 - GoogleSearchChannel - INFO - Google API搜索完成，找到 10 个结果
+2025-07-22 19:53:00,058 - DynamicVectorStore - INFO - 成功存储 0 个文档
+2025-07-22 19:53:00,058 - EnhancedRAGProcessor - INFO - 存储了 0 个搜索结果
+2025-07-22 19:53:00,058 - EnhancedRAGProcessor - INFO - 💾 存储了 10 个新的搜索结果
+2025-07-22 19:53:00,058 - EnhancedRAGProcessor - ERROR - LLM调用失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:53:00,059 - EnhancedRAGProcessor - INFO - ✅ 查询处理完成，耗时: 9.96s
+2025-07-22 19:53:00,059 - __main__ - INFO - ✅ 回答: 基于搜索到的信息：
+
+参考资料 1:
+什么是云计算？ 云计算概念中心 Machine Learning 机器学习与深度学习之间有什么区别？ 创建 AWS 账户 了解机器学习免费服务 在云中免费构建、部...
+2025-07-22 19:53:00,059 - __main__ - INFO - 测试查询: 请写一个关于AI的小故事 (creative)
+2025-07-22 19:53:00,059 - EnhancedRAGProcessor - INFO - 🔍 查询类型: creative
+2025-07-22 19:53:00,076 - EnhancedRAGProcessor - INFO - 🌐 需要搜索引擎查询: 最高相似度不足 (0.600 < 0.7)
+2025-07-22 19:53:00,076 - MCPProcessor - INFO - 处理查询: 请写一个关于AI的小故事
+2025-07-22 19:53:00,076 - GoogleSearchChannel - INFO - 开始Google API搜索: 请写一个关于AI的小故事
+2025-07-22 19:53:22,851 - GoogleSearchChannel - INFO - Google API搜索完成，找到 10 个结果
+2025-07-22 19:53:23,087 - DynamicVectorStore - INFO - 成功存储 0 个文档
+2025-07-22 19:53:23,087 - EnhancedRAGProcessor - INFO - 存储了 0 个搜索结果
+2025-07-22 19:53:23,087 - EnhancedRAGProcessor - INFO - 💾 存储了 10 个新的搜索结果
+2025-07-22 19:53:23,088 - EnhancedRAGProcessor - ERROR - LLM调用失败: TencentDeepSeekClient.chat_completions_create() got an unexpected keyword argument 'max_tokens'
+2025-07-22 19:53:23,088 - EnhancedRAGProcessor - INFO - ✅ 查询处理完成，耗时: 23.03s
+2025-07-22 19:53:23,088 - __main__ - INFO - ✅ 回答: 基于搜索到的信息：
+
+参考资料 1:
+是一起說故事嗎？（小蜘蛛、彩虹）. 本集call out的故事角色登場的集數是 ... （在一起說故事官網訂閱的聽眾，請至黃色封面的VIP頻道收聽） 收聽相關問題...
+2025-07-22 19:53:23,088 - __main__ - INFO - 🎉 系统测试完成

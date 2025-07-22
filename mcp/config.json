@@ -11,9 +11,10 @@
     "model": "deepseek-v3-0324"
   },
   "milvus": {
-    "uri": "./milvus_rag.db",
+    "endpoint": "./milvus_rag.db",
+    "token": null,
     "collection_name": "rag_documents",
-    "dimension": 384
+    "vector_dim": 384
   },
   "embedding": {
     "model_name": "all-MiniLM-L6-v2",

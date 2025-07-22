@@ -333,7 +333,7 @@ async def test_google_search():
                     print(f"  {i}. {result.title}")
                     print(f"     URL: {result.url}")
                     print(f"     相关性: {result.relevance_score:.2f}")
-                    print(f"     内容预览: {result.content[:100]}...")
+                    print(f"     内容预览: {result.content}...")
                     print()
             else:
                 print("❌ 没有找到结果")
