@@ -21,8 +21,10 @@
     "cache_size": 1000
   },
   "rag": {
-    "similarity_threshold": 0.7,
+    "similarity_threshold": 0.5,
     "max_context_length": 4000,
-    "combine_search_and_vector": true
+    "combine_search_and_vector": true,
+    "enable_smart_search": true,
+    "min_vector_results": 3
   }
 }

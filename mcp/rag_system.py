@@ -96,7 +96,7 @@ class RAGSystemConfig:
                 "cache_size": 1000
             },
             "rag": {
-                "similarity_threshold": 0.7,
+                "similarity_threshold": 0.5,
                 "max_context_length": 4000,
                 "combine_search_and_vector": True,
                 "enable_smart_search": True,
@@ -245,7 +245,6 @@ class RAGSystemManager:
                 messages=test_messages,
                 stream=False,
                 enable_search=False,
-                max_tokens=10,
                 temperature=0.1
             )
             if test_response and "choices" in test_response:
@@ -320,6 +319,11 @@ class RAGSystemManager:
             "enable_local_knowledge": True,
             "enable_news": False
         }
+        
+        # 输出RAG配置用于调试
+        logger.info(f"📋 RAG配置传递: similarity_threshold={rag_config.get('similarity_threshold')}, "
+                   f"enable_smart_search={rag_config.get('enable_smart_search')}, "
+                   f"min_vector_results={rag_config.get('min_vector_results')}")
         
         self.rag_processor = EnhancedRAGProcessor(
             vector_store=self.vector_store,

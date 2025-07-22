@@ -17,7 +17,7 @@ import json
 from mcp_framework import MCPProcessor, QueryContext, QueryAnalyzer,QueryType,SearchResult
 from search_channels import GoogleSearchChannel
 from dynamic_vector_store import DynamicVectorStore, VectorStoreManager
-from ask_llm import get_llm_answer
+from ask_llm import get_llm_answer_deepseek
 from encoder import emb_text
 from milvus_utils import get_milvus_client
 
@@ -51,9 +51,14 @@ class EnhancedRAGProcessor:
         self.query_analyzer = QueryAnalyzer()
         
         # 智能查询策略配置
-        self.similarity_threshold = self.config.get("similarity_threshold", 0.75)  # 相似度阈值
+        self.similarity_threshold = self.config.get("similarity_threshold", 0.5)  # 相似度阈值
         self.min_vector_results = self.config.get("min_vector_results", 3)  # 最少向量结果数量
         self.enable_smart_search = self.config.get("enable_smart_search", True)  # 启用智能搜索
+        
+        # 输出配置信息用于调试
+        self.logger.info(f"📊 智能搜索配置: similarity_threshold={self.similarity_threshold}, "
+                        f"min_vector_results={self.min_vector_results}, "
+                        f"enable_smart_search={self.enable_smart_search}")
         
         # 初始化配置
         self._init_components()
@@ -421,7 +426,6 @@ class EnhancedRAGProcessor:
                         messages=messages,
                         stream=False,
                         enable_search=True,  # 启用DeepSeek的搜索功能
-                        max_tokens=4000,     # 设置最大输出token数量
                         temperature=0.7,     # 设置创造性参数
                         top_p=0.9,          # 设置核采样参数
                         frequency_penalty=0.0,  # 频率惩罚
