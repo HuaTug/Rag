@@ -247,10 +247,27 @@ class MCPProcessor:
     
     def _route_query(self, context: QueryContext) -> List[BaseChannel]:
         """查询路由 - 根据查询类型选择合适的通道"""
+        print(f"🔍 开始路由查询，当前注册通道数: {len(self.channels)}")
+        
+        # 显示所有注册的通道
+        for channel_type, channel in self.channels.items():
+            is_available = channel.is_available()
+            print(f"  📡 通道 {channel_type.value}: {'✅ 可用' if is_available else '❌ 不可用'}")
+            
+            # 如果不可用，尝试获取详细信息
+            if not is_available and hasattr(channel, 'api_key'):
+                api_key_status = "已设置" if channel.api_key else "未设置"
+                print(f"     API Key: {api_key_status}")
+            if not is_available and hasattr(channel, 'search_engine_id'):
+                engine_id_status = "已设置" if channel.search_engine_id else "未设置"
+                print(f"     Search Engine ID: {engine_id_status}")
+        
         available_channels = [
             channel for channel in self.channels.values() 
             if channel.is_available()
         ]
+        
+        print(f"🎯 找到 {len(available_channels)} 个可用通道")
         
         # 根据查询类型和优先级排序
         available_channels.sort(
@@ -343,73 +360,3 @@ class QueryAnalyzer:
         
         # 默认为对话性查询
         return QueryType.CONVERSATIONAL
-
-
-# 使用示例
-async def example_usage():
-    """使用示例"""
-    print("🎉 MCP框架测试开始")
-    print("=" * 50)
-    
-    # 创建MCP处理器
-    mcp = MCPProcessor()
-    
-    # 注册模拟通道
-    print("\n📝 注册通道...")
-    mcp.register_channel(MockSearchChannel())
-    mcp.register_channel(MockKnowledgeChannel())
-    
-    # 测试查询列表
-    test_queries = [
-        "什么是人工智能？",
-        "如何学习Python编程？",
-        "创建一个网站需要什么？"
-    ]
-    
-    for i, query in enumerate(test_queries, 1):
-        print(f"\n{'='*20} 测试 {i} {'='*20}")
-        
-        # 创建查询上下文
-        context = QueryContext(
-            query=query,
-            query_type=QueryAnalyzer.analyze_query(query),
-            max_results=5
-        )
-        
-        # 处理查询
-        results = await mcp.process_query(context)
-        
-        # 显示结果
-        print(f"\n📊 查询结果 ({len(results)} 个):")
-        print("-" * 40)
-        
-        if results:
-            for j, result in enumerate(results, 1):
-                print(f"{j}. 标题: {result.title}")
-                print(f"   来源: {result.source}")
-                print(f"   相关性: {result.relevance_score:.2f}")
-                print(f"   通道: {result.channel_type.value}")
-                print(f"   内容: {result.content[:50]}...")
-                print()
-        else:
-            print("❌ 没有找到结果")
-    
-    print("\n🎉 测试完成!")
-
-
-def main():
-    """主函数"""
-    print("🚀 启动MCP框架演示")
-    
-    # 配置日志
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    
-    # 运行示例
-    asyncio.run(example_usage())
-
-
-if __name__ == "__main__":
-    main()

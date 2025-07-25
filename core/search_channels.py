@@ -17,7 +17,10 @@ import aiohttp
 import requests  # 添加同步请求库
 from bs4 import BeautifulSoup
 
-from mcp_framework import BaseChannel, ChannelType, SearchResult, QueryContext
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from service.channel_framework import BaseChannel, ChannelType, SearchResult, QueryContext
 from dotenv import load_dotenv
 
 
@@ -307,7 +310,7 @@ async def test_google_search():
     print("✅ Google API搜索通道可用")
     
     # 创建测试查询
-    from mcp_framework import QueryContext, QueryType
+    from service.channel_framework import QueryContext, QueryType
     
     test_queries = [
         "九三阅兵",

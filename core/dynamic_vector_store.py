@@ -17,7 +17,10 @@ import time
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Optional
 
-from mcp_framework import SearchResult
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from service.channel_framework import SearchResult
 
 # 添加项目根目录到Python路径以正确导入模块
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -481,7 +484,7 @@ async def test_dynamic_vector_store():
     )
     
     # 创建测试搜索结果
-    from mcp_framework import ChannelType, SearchResult
+    from service.channel_framework import ChannelType, SearchResult
     
     test_results = [
         SearchResult(

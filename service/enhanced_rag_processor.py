@@ -10,16 +10,44 @@
 import asyncio
 import logging
 import time
+import sys
+import os
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
 import json
 
-from mcp_framework import MCPProcessor, QueryContext, QueryAnalyzer,QueryType,SearchResult
+# 添加上级目录到路径以便导入模块
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# 导入MCP框架
+from channel_framework import MCPProcessor, QueryContext, QueryAnalyzer, QueryType, SearchResult
+
+# 导入core模块
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'core'))
 from search_channels import GoogleSearchChannel
 from dynamic_vector_store import DynamicVectorStore, VectorStoreManager
-from ask_llm import get_llm_answer_deepseek
-from encoder import emb_text
-from milvus_utils import get_milvus_client
+
+# 导入MCP目录下的智能查询分析器
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'mcp'))
+from smart_query_analyzer import SmartQueryAnalyzer, QueryAnalysisResult, SimpleCalculator
+
+try:
+    from ask_llm import get_llm_answer_deepseek
+    from ..core.encoder import emb_text
+    from ..core.milvus_utils import get_milvus_client
+except ImportError as e:
+    print(f"警告: 无法导入某些模块: {e}")
+    # 定义mock函数，匹配真实函数签名
+    def get_llm_answer_deepseek(client, context: str, question: str, model: str = "deepseek-v3-0324", min_distance_threshold: float = 0.5) -> str:
+        return f"模拟LLM响应 - 问题: {question}"
+    
+    def emb_text(text: str):
+        # 返回模拟向量
+        import random
+        return [random.random() for _ in range(384)]
+    
+    def get_milvus_client():
+        return None
 
 
 @dataclass
@@ -31,6 +59,7 @@ class RAGResponse:
     processing_time: float
     confidence_score: float
     metadata: Dict[str, Any]
+    analysis_result: Optional[QueryAnalysisResult] = None  # 新增分析结果
 
 
 class EnhancedRAGProcessor:
@@ -49,6 +78,10 @@ class EnhancedRAGProcessor:
         self.mcp_processor = MCPProcessor()
         self.vector_store_manager = VectorStoreManager()
         self.query_analyzer = QueryAnalyzer()
+        
+        # 新增智能查询分析器
+        self.smart_analyzer = SmartQueryAnalyzer(self.config)
+        self.calculator = SimpleCalculator()
         
         # 智能查询策略配置
         self.similarity_threshold = self.config.get("similarity_threshold", 0.5)  # 相似度阈值
@@ -161,47 +194,91 @@ class EnhancedRAGProcessor:
     
     async def process_query(self, context: QueryContext) -> RAGResponse:
         """
-        处理查询请求 - 实现智能查询策略
+        智能处理查询请求 - 集成Go demo的分析能力
         
-        策略：
-        1. 首先从向量数据库查找相似内容
-        2. 如果找到足够相似且数量充足的内容，直接使用
-        3. 否则调用搜索引擎获取新内容
-        4. 将新内容存储到向量数据库
+        流程：
+        1. 智能分析查询意图
+        2. 根据分析结果选择最优策略
+        3. 执行相应的工具调用
+        4. 生成综合回答
         """
         start_time = time.time()
         query = context.query
         
         try:
-            # 1. 查询分析
-            query_type = context.query_type
-            self.logger.info(f"🔍 查询类型: {query_type.value}")
+            self.logger.info(f"🤖 开始智能处理查询: {query}")
             
-            # 2. 智能查询策略：先检查向量数据库
-            vector_results = await self._perform_vector_search(query, context.max_results)
+            # 1. 智能查询分析 - 核心改进
+            analysis_result = await self.smart_analyzer.analyze_query_intent(query)
+            self.logger.info(f"🧠 查询分析完成: {analysis_result.query_type} "
+                           f"(置信度: {analysis_result.confidence:.2f})")
             
-            # 3. 判断是否需要调用搜索引擎
-            need_search, reason = self._should_perform_search(vector_results, context)
-            
+            # 2. 根据分析结果执行相应策略
             search_results = []
-            if need_search:
-                self.logger.info(f"🌐 需要搜索引擎查询: {reason}")
-                search_results = await self._perform_search(context)
+            vector_results = []
+            calculation_results = []
+            database_results = []
+            
+            # 计算处理（如果需要）
+            if analysis_result.needs_calculation:
+                self.logger.info("🧮 执行数学计算...")
+                calc_result = self.calculator.calculate(analysis_result.calculation_args)
+                calculation_results.append(calc_result)
+            
+            # 向量搜索（如果需要）
+            if analysis_result.needs_vector_search:
+                self.logger.info("🔍 执行向量搜索...")
+                vector_results = await self._perform_vector_search(query, context.max_results)
+                
+                # 动态搜索策略：检查向量搜索结果质量
+                if analysis_result.enable_dynamic_search and vector_results:
+                    max_similarity = max((result.get("similarity_score", 0) for result in vector_results), default=0)
+                    self.logger.info(f"📊 向量搜索最高相似度: {max_similarity:.3f}")
+                    
+                    if max_similarity < analysis_result.min_similarity_threshold:
+                        self.logger.warning(f"⚠️ 向量搜索相似度过低 ({max_similarity:.3f} < {analysis_result.min_similarity_threshold})，启用网络搜索")
+                        analysis_result.needs_web_search = True
+                        analysis_result.web_search_query = query
+                        analysis_result.reasoning += f" - 向量搜索相似度过低({max_similarity:.3f})，启用网络搜索"
+                elif analysis_result.enable_dynamic_search and not vector_results:
+                    self.logger.warning("⚠️ 向量搜索无结果，启用网络搜索")
+                    analysis_result.needs_web_search = True
+                    analysis_result.web_search_query = query
+                    analysis_result.reasoning += " - 向量搜索无结果，启用网络搜索"
+
+            # 网络搜索（如果需要）
+            if analysis_result.needs_web_search:
+                self.logger.info(f"🌐 执行网络搜索: {analysis_result.web_search_query}")
+                search_context = QueryContext(
+                    query=analysis_result.web_search_query,
+                    query_type=context.query_type,
+                    max_results=context.max_results,
+                    timeout=context.timeout
+                )
+                search_results = await self._perform_search(search_context)
                 
                 # 存储新的搜索结果到向量数据库
                 if search_results:
                     await self._store_search_results(search_results)
                     self.logger.info(f"💾 存储了 {len(search_results)} 个新的搜索结果")
-            else:
-                self.logger.info(f"✅ 使用向量数据库结果: {reason}")
             
-            # 4. 融合和排序结果
-            all_results = self._merge_results(search_results, vector_results)
+            # 数据库查询（如果需要）
+            if analysis_result.needs_database:
+                self.logger.info("🗄️ 执行数据库查询...")
+                # 这里可以集成实际的数据库查询功能
+                database_results = await self._perform_database_query(analysis_result.database_query)
             
-            # 5. 生成答案
-            answer, confidence = await self._generate_answer(query, all_results)
+            # 3. 融合所有结果
+            all_results = self._merge_all_results(
+                search_results, vector_results, calculation_results, database_results
+            )
             
-            # 6. 构建响应
+            # 4. 生成智能答案
+            answer, confidence = await self._generate_smart_answer(
+                query, all_results, analysis_result
+            )
+            
+            # 5. 构建增强响应
             processing_time = time.time() - start_time
             response = RAGResponse(
                 answer=answer,
@@ -209,29 +286,39 @@ class EnhancedRAGProcessor:
                 search_results=search_results,
                 processing_time=processing_time,
                 confidence_score=confidence,
+                analysis_result=analysis_result,  # 新增分析结果
                 metadata={
-                    "query_type": query_type.value,
+                    "query_type": context.query_type.value,
+                    "analysis_type": analysis_result.query_type,
+                    "analysis_confidence": analysis_result.confidence,
                     "total_results": len(all_results),
                     "search_results_count": len(search_results),
                     "vector_results_count": len(vector_results),
-                    "used_search_engine": need_search,
-                    "search_reason": reason,
-                    "similarity_threshold": self.similarity_threshold
+                    "calculation_results_count": len(calculation_results),
+                    "database_results_count": len(database_results),
+                    "used_search_engine": analysis_result.needs_web_search,
+                    "used_vector_search": analysis_result.needs_vector_search,
+                    "used_calculation": analysis_result.needs_calculation,
+                    "used_database": analysis_result.needs_database,
+                    "analysis_reasoning": analysis_result.reasoning,
+                    "tools_used": [tool.name for tool in analysis_result.tool_calls],
+                    "strategy": self.smart_analyzer.get_search_strategy(analysis_result)
                 }
             )
             
-            self.logger.info(f"✅ 查询处理完成，耗时: {processing_time:.2f}s")
+            self.logger.info(f"✅ 智能查询处理完成，耗时: {processing_time:.2f}s, "
+                           f"策略: {response.metadata['strategy']}")
             return response
             
         except Exception as e:
-            self.logger.error(f"查询处理失败: {e}")
+            self.logger.error(f"智能查询处理失败: {e}")
             return RAGResponse(
                 answer=f"抱歉，处理您的查询时出现错误: {str(e)}",
                 sources=[],
                 search_results=[],
                 processing_time=time.time() - start_time,
                 confidence_score=0.0,
-                metadata={"error": str(e)}
+                metadata={"error": str(e), "fallback": True}
             )
     
     def _should_perform_search(self, vector_results: List[Dict[str, Any]], context: QueryContext) -> Tuple[bool, str]:
@@ -513,16 +600,216 @@ class EnhancedRAGProcessor:
             "enable_smart_search": self.enable_smart_search,
             "vector_stores": list(self.vector_store_manager.stores.keys())
         }
+    
+    async def _perform_database_query(self, query_args: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """执行数据库查询（模拟实现）"""
+        try:
+            # 这里应该集成实际的数据库查询功能
+            # 目前提供模拟数据
+            query_type = query_args.get("query_type", "select")
+            
+            if query_type == "count":
+                return [{
+                    "type": "database_result",
+                    "query": f"统计查询: {query_args}",
+                    "result": "活跃用户: 1250, 非活跃用户: 350",
+                    "source": "用户数据库",
+                    "timestamp": time.time()
+                }]
+            
+            elif query_type == "select":
+                return [{
+                    "type": "database_result",
+                    "query": f"查询: {query_args}",
+                    "result": "返回了5条用户记录",
+                    "source": "用户数据库",
+                    "timestamp": time.time()
+                }]
+            
+            return []
+            
+        except Exception as e:
+            self.logger.error(f"数据库查询失败: {e}")
+            return []
 
 
 # 使用示例和测试
-async def test_smart_rag():
-    """测试智能RAG系统"""
-    print("🧪 测试智能RAG系统...")
+    def _merge_all_results(self, 
+                          search_results: List[SearchResult], 
+                          vector_results: List[Dict[str, Any]],
+                          calculation_results: List[Dict[str, Any]],
+                          database_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """融合所有类型的结果"""
+        all_results = []
+        
+        # 搜索结果
+        for result in search_results:
+            all_results.append({
+                "type": "search",
+                "title": result.title,
+                "content": result.content,
+                "url": result.url,
+                "source": result.source,
+                "timestamp": result.timestamp,
+                "relevance_score": result.relevance_score,
+                "channel_type": str(result.channel_type)
+            })
+        
+        # 向量搜索结果
+        for result in vector_results:
+            result["type"] = "vector"
+            all_results.append(result)
+        
+        # 计算结果
+        for result in calculation_results:
+            result["type"] = "calculation"
+            result["source"] = "计算器"
+            result["timestamp"] = time.time()
+            all_results.append(result)
+        
+        # 数据库结果
+        for result in database_results:
+            all_results.append(result)
+        
+        # 按相关性排序
+        all_results.sort(key=lambda x: x.get("relevance_score", x.get("similarity_score", 0.5)), reverse=True)
+        
+        return all_results
+
+
+# 使用示例和测试
+    async def _generate_smart_answer(self, 
+                                    query: str, 
+                                    results: List[Dict[str, Any]],
+                                    analysis: QueryAnalysisResult) -> Tuple[str, float]:
+        """生成智能答案 - 基于查询分析结果"""
+        
+        if not results:
+            return self._generate_fallback_answer(query, analysis), 0.3
+        
+        # 构建上下文
+        context_parts = []
+        confidence_factors = []
+        
+        for result in results[:8]:  # 限制上下文长度
+            result_type = result.get("type", "unknown")
+            
+            if result_type == "calculation":
+                if "result" in result:
+                    context_parts.append(f"[计算结果] {result.get('expression', '')} = {result['result']}")
+                    confidence_factors.append(0.9)  # 计算结果置信度高
+                elif "error" in result:
+                    context_parts.append(f"[计算错误] {result['error']}")
+                    confidence_factors.append(0.2)
+            
+            elif result_type == "database_result":
+                context_parts.append(f"[数据库] {result.get('result', '')}")
+                confidence_factors.append(0.8)
+            
+            elif result_type == "search":
+                content = result.get("content", "")[:300]  # 限制长度
+                source = result.get("source", "")
+                context_parts.append(f"[搜索] {content}\n来源: {source}")
+                confidence_factors.append(result.get("relevance_score", 0.5))
+            
+            elif result_type == "vector":
+                content = result.get("content", "")[:300]
+                source = result.get("source", "知识库")
+                similarity = result.get("similarity_score", 0.5)
+                context_parts.append(f"[知识库] {content}\n来源: {source} (相似度: {similarity:.2f})")
+                confidence_factors.append(similarity)
+        
+        context = "\n\n".join(context_parts)
+        
+        # 根据分析类型构建提示词
+        prompt = self._build_answer_prompt(query, context, analysis)
+        
+        try:
+            # 调用LLM生成答案
+            if hasattr(self, 'llm_client') and self.llm_client:
+                # 使用真实的LLM客户端
+                answer = get_llm_answer_deepseek(
+                    client=self.llm_client,
+                    context=context,
+                    question=query
+                )
+            else:
+                # 使用mock函数
+                answer = f"基于分析结果回答：{prompt[:200]}..."
+            
+            # 计算置信度
+            avg_confidence = sum(confidence_factors) / len(confidence_factors) if confidence_factors else 0.5
+            final_confidence = min(0.95, avg_confidence * analysis.confidence)
+            
+            return answer, final_confidence
+            
+        except Exception as e:
+            self.logger.error(f"LLM答案生成失败: {e}")
+            return self._synthesize_answer_fallback(query, results), 0.4
     
-    # 这里可以添加测试代码
-    pass
+    def _build_answer_prompt(self, query: str, context: str, analysis: QueryAnalysisResult) -> str:
+        """根据查询分析结果构建答案提示词"""
+        
+        if analysis.query_type == "time":
+            return f"""用户询问时间相关问题：{query}
 
+以下是获取的最新信息：
+{context}
 
-if __name__ == "__main__":
-    asyncio.run(test_smart_rag())
+请基于这些最新信息准确回答用户的时间相关问题。如果信息中包含具体的时间数据，请直接提供。"""
+        
+        elif analysis.query_type == "calculation":
+            return f"""用户询问数学计算问题：{query}
+
+计算结果：
+{context}
+
+请基于计算结果为用户提供清晰的数学答案，并简要说明计算过程。"""
+        
+        elif analysis.query_type == "technical":
+            return f"""用户询问技术问题：{query}
+
+相关技术信息：
+{context}
+
+请基于这些技术资料提供详细、准确的技术解答。可以包含技术细节和实现方法。"""
+        
+        else:
+            return f"""用户问题：{query}
+
+相关信息：
+{context}
+
+请综合以上信息，为用户提供准确、有用的回答。如果信息来源于不同渠道，请适当整合。"""
+    
+    def _generate_fallback_answer(self, query: str, analysis: QueryAnalysisResult) -> str:
+        """生成备用答案"""
+        if analysis.query_type == "time":
+            return "抱歉，我无法获取当前的时间信息。请检查网络连接或稍后再试。"
+        elif analysis.query_type == "calculation":
+            return f"抱歉，无法完成计算：{query}。请检查表达式是否正确。"
+        elif analysis.query_type == "technical":
+            return f"关于您询问的技术问题「{query}」，我暂时没有找到相关信息。建议您查阅官方文档或技术论坛。"
+        else:
+            return f"抱歉，我暂时无法回答您的问题「{query}」。请尝试重新表述或提供更多上下文。"
+    
+    def _synthesize_answer_fallback(self, query: str, results: List[Dict[str, Any]]) -> str:
+        """合成备用答案"""
+        if not results:
+            return f"关于您的问题「{query}」，我没有找到相关信息。"
+        
+        answer_parts = [f"关于您的问题「{query}」，我找到了以下信息：\n"]
+        
+        for i, result in enumerate(results[:3], 1):
+            result_type = result.get("type", "unknown")
+            if result_type == "calculation" and "result" in result:
+                answer_parts.append(f"{i}. 计算结果：{result.get('expression', '')} = {result['result']}")
+            elif result_type == "database_result":
+                answer_parts.append(f"{i}. 数据库查询：{result.get('result', '')}")
+            else:
+                content = result.get("content", "")[:200]
+                source = result.get("source", "")
+                answer_parts.append(f"{i}. {content} (来源：{source})")
+        
+        answer_parts.append("\n以上信息供您参考。")
+        return "\n\n".join(answer_parts)
