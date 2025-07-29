@@ -184,8 +184,7 @@ class MockKnowledgeChannel(BaseChannel):
         return True
 
 
-class MCPProcessor:
-    """MCP多通道处理器"""
+class MProcessor:
     
     def __init__(self):
         self.channels: Dict[ChannelType, BaseChannel] = {}

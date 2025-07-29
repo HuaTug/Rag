@@ -7,64 +7,25 @@
 集成Go demo的智能分析能力，提供语义理解和工具选择功能。
 """
 
-import asyncio
 import json
 import logging
 import re
 import sys
 import os
-from dataclasses import dataclass
-from typing import Dict, Any, Optional, List, Union
-import aiohttp
 import time
+from dataclasses import dataclass
+from typing import Dict, Any, List
+from pathlib import Path
+from dotenv import load_dotenv
 
-# 添加上级目录到路径
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# 添加项目根目录到Python路径
+project_root = Path(__file__).parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
-# 尝试导入原始函数和客户端
-try:
-    from ..core.ask_llm import get_llm_answer_deepseek as _original_llm_function, TencentDeepSeekClient
-    _llm_available = True
-except ImportError:
-    _original_llm_function = None
-    TencentDeepSeekClient = None
-    _llm_available = False
+from core.ask_llm import get_llm_answer_with_prompt, TencentDeepSeekClient
 
-# 创建适配函数
-async def get_llm_answer_deepseek(query: str, search_flag: bool = False, timeout: int = 15) -> str:
-    """
-    适配函数，兼容原始LLM函数的调用方式
-    """
-    if not _llm_available:
-        return f"模拟LLM响应: {query}"
-    
-    try:
-        # 尝试从环境变量获取API密钥
-        import os
-        api_key = os.getenv("DEEPSEEK_API_KEY","sk-qFPEqgpxmS8DJ0nJQ6gvdIkozY1k2oEZER2A4zRhLxBvtIHl") or os.getenv("TENCENT_API_KEY")
-        
-        if not api_key:
-            # 如果没有API密钥，返回模拟响应
-            return f"LLM分析: 需要设置DEEPSEEK_API_KEY或TENCENT_API_KEY环境变量。查询: {query[:100]}..."
-        
-        # 创建客户端并调用原始函数
-        client = TencentDeepSeekClient(api_key=api_key)
-        
-        # 调用原始函数，使用适当的参数
-        response = _original_llm_function(
-            client=client,
-            context="",  # 空上下文，让LLM基于知识库回答
-            question=query,
-            model="deepseek-v3-0324"
-        )
-        
-        return response
-        
-    except Exception as e:
-        # 如果调用失败，返回错误信息和模拟响应
-        return f"LLM调用失败 ({str(e)})，使用默认分析: {query[:100]}..."
-
-
+load_dotenv()
 @dataclass
 class ToolCall:
     """工具调用结构"""
@@ -136,9 +97,10 @@ class SmartQueryAnalyzer:
         try:
             self.logger.info(f"🔍 开始分析查询: {query}")
             
-            # 优先使用语义分析（大模型分析）
+            # 优先使用语义分析（大模型分析）- 让LLM智能判断所有类型的查询
             if self.enable_semantic_analysis:
                 try:
+                    self.logger.info("🤖 使用LLM进行智能语义分析...")
                     result = await self._semantic_analysis(query)
                     analysis_time = time.time() - start_time
                     self.logger.info(f"✅ 语义分析完成 - 耗时: {analysis_time:.2f}s")
@@ -148,8 +110,10 @@ class SmartQueryAnalyzer:
                     # 如果不允许回退到关键词，直接抛出异常
                     if not self.fallback_to_keywords:
                         raise
+            else:
+                self.logger.info("🔄 LLM不可用，直接使用回退分析")
             
-            # 只有在语义分析失败且允许回退时才使用关键词匹配
+            # 只有在语义分析失败或LLM不可用时才使用关键词匹配作为回退
             self.logger.info("🔄 回退到简化的关键词分析...")
             result = await self._fallback_analysis(query)
             analysis_time = time.time() - start_time
@@ -166,7 +130,6 @@ class SmartQueryAnalyzer:
                 confidence=0.3,
                 enable_dynamic_search=True
             )
-    
     async def _semantic_analysis(self, query: str) -> QueryAnalysisResult:
         """使用LLM进行语义分析"""
         prompt = self._build_analysis_prompt(query)
@@ -175,14 +138,25 @@ class SmartQueryAnalyzer:
             self.logger.info(f"🤖 调用LLM进行语义分析，查询: {query[:50]}...")
             
             # 调用LLM进行分析
-            response = await get_llm_answer_deepseek(
-                query=prompt,
-                search_flag=False,  # 禁用搜索避免循环调用
-                timeout=self.analysis_timeout
-            )
+            try:
+                # 获取API密钥
+                api_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("TENCENT_API_KEY")
+                if not api_key:
+                    raise ValueError("需要设置DEEPSEEK_API_KEY或TENCENT_API_KEY环境变量")
+                
+                # 创建客户端并调用统一函数
+                client = TencentDeepSeekClient(api_key=api_key)
+                response = get_llm_answer_with_prompt(
+                    client=client,
+                    prompt=prompt,
+                    model="deepseek-v3-0324"
+                )
+            except Exception as e:
+                self.logger.error(f"❌ 调用LLM失败: {e}")
+                raise
             
             self.logger.info(f"📝 LLM响应长度: {len(response)} 字符")
-            self.logger.debug(f"📝 LLM原始响应: {response[:300]}...")
+            self.logger.info(f"📝 LLM原始响应: {response}...")
             
             # 解析分析结果
             analysis = self._parse_llm_response(response, query)
@@ -207,53 +181,48 @@ class SmartQueryAnalyzer:
     
     def _build_analysis_prompt(self, query: str) -> str:
         """构建LLM分析提示词 - 让大模型智能语义分析并生成JSON"""
-        return f"""你是一个智能RAG系统的查询分析器。请通过语义分析理解用户查询的真实意图，并智能选择最适合的工具组合。
+        return f"""你是一个智能RAG系统的查询分析器。请通过深度语义分析理解用户查询的真实意图，并智能选择最适合的工具组合。
 
 用户查询："{query}"
 
-🔧 **可用工具说明：**
+ **智能分析任务：**
+请仔细分析用户查询的语义含义，识别用户的真实需求，然后智能决定需要调用哪些工具。
 
-1. **web_search** - 网络搜索
+ **可用工具说明：**
+
+1. **calculation** - 数学计算工具  
+   - 适用场景：任何涉及数值计算的查询
+   - 示例："1+1等于多少？"、"9720乘1024"、"计算100减50"、"2的平方"
+   - 识别重点：包含数字 + 运算意图（加减乘除、等于、多少、计算等）
+
+2. **web_search** - 网络搜索
    - 适用场景：时间日期查询、最新信息、实时数据、新闻
    - 示例："今天几号？"、"最新AI发展"、"现在几点？"
    
-2. **vector_search** - 向量知识库检索
+3. **vector_search** - 向量知识库检索
    - 适用场景：技术概念、定义解释、历史知识、教程
    - 示例："什么是Python？"、"如何学习编程？"
-   
-3. **calculation** - 数学计算
-   - 适用场景：数学运算、数值计算、公式求解
-   - 示例："100+200等于多少？"、"计算平方根"
    
 4. **database_query** - 数据库查询
    - 适用场景：用户统计、数据分析、记录查询
    - 示例："统计用户数量"、"查询活跃用户"
 
-🧠 **智能分析要求：**
+ **关键识别原则：**
 
-请仔细分析查询语义，理解用户的真实需求，然后智能填充以下JSON参数：
+**数学计算识别：**
+- 如果查询包含数字AND包含运算意图词汇，优先识别为计算查询
+- 运算意图词汇：加、减、乘、除、+、-、*、×、/、÷、等于、多少、计算
+- 数学表达式模式：数字+运算符+数字
+- 即使是简单的"1+1"也应该识别为计算查询
 
-📝 **计算查询示例分析：**
-- 查询："100+100等于多少？"
-- 语义分析：用户明确要求进行数学加法运算
-- 应设置：needs_calculation=true, calculation_args={{"operation":"add","x":100,"y":100}}
-- 推理：这是明确的数学计算问题，直接使用calculation工具，不需要搜索
+**时间查询识别：**
+- 包含时间相关词汇：今天、现在、几号、几月、几点、当前、日期
+- 需要实时信息的查询
 
-⏰ **时间查询示例分析：**
-- 查询："今天几号？"
-- 语义分析：用户询问当前日期信息
-- 应设置：needs_web_search=true, web_search_query="今天日期", needs_vector_search=false
-- 推理：时间信息需要实时获取，使用web_search获取最新日期
+**技术查询识别：**
+- 询问概念定义、技术问题、学习教程等
 
-🔍 **技术概念示例分析：**
-- 查询："什么是Go语言？"
-- 语义分析：用户询问技术概念定义
-- 应设置：needs_vector_search=true, enable_dynamic_search=true
-- 推理：技术概念优先从知识库检索，如果质量不佳则启用网络搜索
-
-📊 **参数详细说明：**
-
-calculation_args支持的运算类型：
+ **calculation_args参数说明：**
 - 加法：{{"operation":"add","x":数字1,"y":数字2}}
 - 减法：{{"operation":"subtract","x":数字1,"y":数字2}}  
 - 乘法：{{"operation":"multiply","x":数字1,"y":数字2}}
@@ -261,38 +230,31 @@ calculation_args支持的运算类型：
 - 获取日期：{{"operation":"get_current_date"}}
 - 表达式：{{"operation":"expression","expression":"表达式内容"}}
 
-database_query支持的查询类型：
-- 统计查询：{{"query_type":"count","table":"users","group_by":"status"}}
-- 条件查询：{{"query_type":"select","table":"users","where":{{"status":"active"}},"limit":10}}
-
-🎯 **JSON格式要求：**
-
-请根据语义分析，智能填充所有参数，确保逻辑一致：
+**JSON输出格式：**
 
 {{
   "needs_web_search": 布尔值,
-  "web_search_query": "如果需要网络搜索，填入搜索关键词",
+  "web_search_query": "搜索关键词",
   "needs_vector_search": 布尔值,
   "needs_database": 布尔值,
   "database_query": {{具体的数据库查询参数}},
   "needs_calculation": 布尔值,
   "calculation_args": {{具体的计算参数}},
-  "query_type": "time/technical/calculation/database/general",
+  "query_type": "calculation/time/technical/database/general",
   "confidence": 0.0到1.0的置信度,
-  "reasoning": "详细说明你的语义分析过程和参数设置理由",
+  "reasoning": "详细说明你的分析过程和判断理由",
   "enable_dynamic_search": 布尔值,
   "min_similarity_threshold": 0.8
 }}
 
-⚠️ **重要规则：**
-1. 通过语义理解，不是关键词匹配
-2. reasoning必须详细解释为什么这样设置参数
-3. 如果是计算问题，必须正确解析数字和运算符
-4. 如果是时间问题，web_search_query要具体
-5. 置信度要反映分析的确定程度
-6. 确保参数之间逻辑一致
+⚠️ **重要提醒：**
+1. 优先识别计算查询 - 任何包含数字+运算意图的查询都应该被识别为计算
+2. reasoning字段必须详细解释你的判断过程
+3. 如果是计算查询，needs_calculation=true，并正确解析数字和运算符
+4. 如果是时间查询，needs_web_search=true
+5. 置信度要准确反映你的判断确定性
 
-现在请分析上述查询，只返回JSON结果："""
+现在请仔细分析上述查询，只返回JSON结果："""
     
     def _parse_llm_response(self, response: str, query: str) -> QueryAnalysisResult:
         """解析LLM响应 - 直接使用大模型的语义分析结果"""
@@ -301,6 +263,7 @@ database_query支持的查询类型：
             
             # 清理响应文本
             response = response.strip()
+            self.logger.info(f"🧹 清理后的响应: {response}")
             
             # 多种方式提取JSON
             json_str = None
@@ -433,13 +396,20 @@ database_query支持的查询类型：
             analysis.reasoning = "回退分析：检测到时间相关查询"
             analysis.confidence = 0.8
         
-        # 明显的计算查询
-        elif any(word in query_lower for word in ["计算", "加", "减", "乘", "除", "+", "-", "*", "/"]):
+        # 明显的计算查询 - 扩展识别模式
+        calc_keywords = ["计算", "加", "减", "乘", "除", "+", "-", "*","x","/", "等于", "多少", "几", "加法", "减法", "乘法", "除法"]
+        math_patterns = [r'\d+\s*[\+\-\*\/]\s*\d+', r'\d+\s*(加|减|乘|除)\s*\d+', r'\d+\s*等于']
+        
+        has_calc_keyword = any(word in query_lower for word in calc_keywords)
+        has_math_pattern = any(re.search(pattern, query_lower) for pattern in math_patterns)
+        
+        if has_calc_keyword or has_math_pattern:
             analysis.needs_calculation = True
+            analysis.needs_vector_search = False  # 计算不需要向量搜索
             analysis.calculation_args = self._parse_calculation(query)
             analysis.query_type = "calculation"
-            analysis.reasoning = "回退分析：检测到计算查询"
-            analysis.confidence = 0.7
+            analysis.reasoning = f"回退分析：检测到计算查询 (关键词: {has_calc_keyword}, 模式: {has_math_pattern})"
+            analysis.confidence = 0.8
         
         # 如果有日期查询，添加获取当前日期的功能
         if "几号" in query_lower or "几月" in query_lower or "日期" in query_lower:
@@ -528,50 +498,67 @@ database_query支持的查询类型：
         }
     
     def _parse_calculation(self, query: str) -> Dict[str, Any]:
-        """解析数学计算表达式"""
+        """解析数学计算表达式 - 增强版"""
         query_lower = query.lower()
         
-        # 简单的数学表达式解析
-        # 在实际应用中可以使用更复杂的表达式解析器
+        # 提取所有数字
+        numbers = re.findall(r'\d+\.?\d*', query)
         
-        if "加" in query_lower or "+" in query:
-            # 尝试提取数字
-            numbers = re.findall(r'\d+\.?\d*', query)
-            if len(numbers) >= 2:
+        # 检查各种运算符和关键词
+        if ("加" in query_lower or "+" in query) and len(numbers) >= 2:
+            return {
+                "operation": "add",
+                "x": float(numbers[0]),
+                "y": float(numbers[1])
+            }
+        
+        if ("减" in query_lower or "-" in query) and len(numbers) >= 2:
+            return {
+                "operation": "subtract",
+                "x": float(numbers[0]),
+                "y": float(numbers[1])
+            }
+        
+        if ("乘" in query_lower or "*" in query or "×" in query) and len(numbers) >= 2:
+            return {
+                "operation": "multiply",
+                "x": float(numbers[0]),
+                "y": float(numbers[1])
+            }
+        
+        if ("除" in query_lower or "/" in query or "÷" in query) and len(numbers) >= 2:
+            return {
+                "operation": "divide",
+                "x": float(numbers[0]),
+                "y": float(numbers[1])
+            }
+        
+        # 特殊处理：检查是否包含数学表达式
+        # 匹配 "数字+数字" 或 "数字加数字" 或 "数字加上数字" 等模式
+        add_patterns = [
+            r'(\d+\.?\d*)\s*\+\s*(\d+\.?\d*)',
+            r'(\d+\.?\d*)\s*加\s*(\d+\.?\d*)',
+            r'(\d+\.?\d*)\s*加上\s*(\d+\.?\d*)'
+        ]
+        
+        for pattern in add_patterns:
+            match = re.search(pattern, query)
+            if match:
                 return {
                     "operation": "add",
-                    "x": float(numbers[0]),
-                    "y": float(numbers[1])
+                    "x": float(match.group(1)),
+                    "y": float(match.group(2))
                 }
         
-        if "减" in query_lower or "-" in query:
-            numbers = re.findall(r'\d+\.?\d*', query)
-            if len(numbers) >= 2:
-                return {
-                    "operation": "subtract",
-                    "x": float(numbers[0]),
-                    "y": float(numbers[1])
-                }
+        # 如果找到数字但没有明确运算符，且查询包含"等于"，假设是加法
+        if len(numbers) >= 2 and ("等于" in query_lower or "多少" in query_lower):
+            return {
+                "operation": "add",
+                "x": float(numbers[0]),
+                "y": float(numbers[1])
+            }
         
-        if "乘" in query_lower or "*" in query or "×" in query:
-            numbers = re.findall(r'\d+\.?\d*', query)
-            if len(numbers) >= 2:
-                return {
-                    "operation": "multiply",
-                    "x": float(numbers[0]),
-                    "y": float(numbers[1])
-                }
-        
-        if "除" in query_lower or "/" in query or "÷" in query:
-            numbers = re.findall(r'\d+\.?\d*', query)
-            if len(numbers) >= 2:
-                return {
-                    "operation": "divide",
-                    "x": float(numbers[0]),
-                    "y": float(numbers[1])
-                }
-        
-        # 默认计算
+        # 默认：尝试解析为表达式
         return {
             "operation": "expression",
             "expression": query
@@ -648,34 +635,3 @@ class SimpleCalculator:
         except Exception as e:
             return {"error": f"计算错误: {str(e)}"}
 
-
-if __name__ == "__main__":
-    # 测试代码
-    async def test_analyzer():
-        analyzer = SmartQueryAnalyzer()
-        
-        test_queries = [
-            "今天几号？",
-            "什么是Milvus向量数据库？",
-            "计算15.5加上24.3的结果",
-            "查询活跃用户数量",
-            "最新的AI技术发展如何？"
-        ]
-        
-        for query in test_queries:
-            print(f"\n📝 测试查询: {query}")
-            print("-" * 40)
-            
-            result = await analyzer.analyze_query_intent(query)
-            
-            print(f"查询类型: {result.query_type}")
-            print(f"需要网络搜索: {result.needs_web_search}")
-            print(f"需要向量搜索: {result.needs_vector_search}")
-            print(f"需要数据库查询: {result.needs_database}")
-            print(f"需要计算: {result.needs_calculation}")
-            print(f"置信度: {result.confidence:.2f}")
-            print(f"推理过程: {result.reasoning}")
-            print(f"工具调用数: {len(result.tool_calls)}")
-    
-    # 运行测试
-    asyncio.run(test_analyzer())

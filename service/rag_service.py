@@ -12,7 +12,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any, Union
-import asyncio
 import logging
 import time
 import json
@@ -29,8 +28,7 @@ load_dotenv()
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# 导入MCP目录下的智能查询分析器
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'mcp'))
+# 导入本地模块 - 修复相对导入问题
 from smart_query_analyzer import SmartQueryAnalyzer, QueryAnalysisResult
 from enhanced_rag_processor import EnhancedRAGProcessor, RAGResponse
 from channel_framework import QueryContext, QueryType
@@ -142,7 +140,7 @@ class RAGService:
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             handlers=[
                 logging.StreamHandler(),
-                logging.FileHandler('rag_service.log', encoding='utf-8')
+                logging.FileHandler('/tmp/rag_service.log', encoding='utf-8')  # 移动到tmp目录避免热重载检测
             ]
         )
         return logging.getLogger(self.__class__.__name__)
@@ -358,12 +356,17 @@ async def general_exception_handler(request, exc: Exception):
 
 if __name__ == "__main__":
     import uvicorn
+    import os
+    
+    # 检查是否为生产环境
+    is_production = os.getenv("ENVIRONMENT") == "production"
     
     # 开发环境运行
     uvicorn.run(
         "rag_service:app",
         host="0.0.0.0",
         port=8000,
-        reload=True,
-        log_level="info"
+        reload=not is_production,  # 生产环境关闭热重载
+        log_level="info",
+        reload_excludes=["*.log", "*.db", "*.lock", "__pycache__/*", "*.pyc"] if not is_production else None
     )

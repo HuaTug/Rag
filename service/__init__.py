@@ -9,7 +9,7 @@ RAG服务包
 
 # 导出主要类和函数 - 避免循环导入，只导入基础框架
 from .channel_framework import (
-    MCPProcessor, 
+    MProcessor, 
     QueryContext, 
     QueryType, 
     SearchResult,
@@ -18,7 +18,7 @@ from .channel_framework import (
 )
 
 __all__ = [
-    "MCPProcessor",
+    "MProcessor",
     "QueryContext",
     "QueryType",
     "SearchResult",

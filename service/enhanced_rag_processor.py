@@ -7,48 +7,25 @@
 集成多通道搜索、向量存储和LLM生成，提供完整的RAG解决方案。
 """
 
-import asyncio
 import logging
 import time
 import sys
 import os
+import re
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
-import json
+from dotenv import load_dotenv
 
-# 添加上级目录到路径以便导入模块
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# 导入MCP框架
-from channel_framework import MCPProcessor, QueryContext, QueryAnalyzer, QueryType, SearchResult
-
+from .channel_framework import MProcessor, QueryContext, QueryAnalyzer, QueryType, SearchResult
+from .smart_query_analyzer import SmartQueryAnalyzer, QueryAnalysisResult, SimpleCalculator
 # 导入core模块
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'core'))
-from search_channels import GoogleSearchChannel
-from dynamic_vector_store import DynamicVectorStore, VectorStoreManager
+from core.search_channels import GoogleSearchChannel
+from core.dynamic_vector_store import DynamicVectorStore, VectorStoreManager
+from core.ask_llm import get_llm_answer_with_prompt
+from core.encoder import emb_text
 
-# 导入MCP目录下的智能查询分析器
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'mcp'))
-from smart_query_analyzer import SmartQueryAnalyzer, QueryAnalysisResult, SimpleCalculator
-
-try:
-    from ask_llm import get_llm_answer_deepseek
-    from ..core.encoder import emb_text
-    from ..core.milvus_utils import get_milvus_client
-except ImportError as e:
-    print(f"警告: 无法导入某些模块: {e}")
-    # 定义mock函数，匹配真实函数签名
-    def get_llm_answer_deepseek(client, context: str, question: str, model: str = "deepseek-v3-0324", min_distance_threshold: float = 0.5) -> str:
-        return f"模拟LLM响应 - 问题: {question}"
-    
-    def emb_text(text: str):
-        # 返回模拟向量
-        import random
-        return [random.random() for _ in range(384)]
-    
-    def get_milvus_client():
-        return None
-
+load_dotenv()
 
 @dataclass
 class RAGResponse:
@@ -74,27 +51,79 @@ class EnhancedRAGProcessor:
         self.search_channels = search_channels or []
         self.llm_client = llm_client
         
+        # 如果没有传入LLM客户端，自动创建一个
+        if not self.llm_client:
+            self._init_llm_client()
+        
         # 初始化组件
-        self.mcp_processor = MCPProcessor()
+        self.mcp_processor = MProcessor()
         self.vector_store_manager = VectorStoreManager()
         self.query_analyzer = QueryAnalyzer()
         
         # 新增智能查询分析器
         self.smart_analyzer = SmartQueryAnalyzer(self.config)
         self.calculator = SimpleCalculator()
+
+        # 新增：初始化增强文本处理器
+        from core.enhanced_text_processor import create_enhanced_text_processor
+        text_processor_config = {
+            "chunk_size": self.config.get("chunk_size", 800),
+            "chunk_overlap": self.config.get("chunk_overlap", 100),
+            "enable_chinese_segmentation": self.config.get("enable_chinese_segmentation", True),
+            "enable_keyword_extraction": self.config.get("enable_keyword_extraction", True),
+            "preserve_code_blocks": self.config.get("preserve_code_blocks", True)
+        }
+
+        self.text_processor = create_enhanced_text_processor(text_processor_config)
+        self.logger.info(f"✅ 初始化增强文本处理器: {self.text_processor.__class__.__name__}")
+
+        # 新增：初始化MCP工具集成
+        self.mcp_integration = None
+        if self.config.get("enable_mcp_tools", False):
+            try:
+                from core.mcp_tool_integration import MCPToolIntegration
+                self.mcp_integration = MCPToolIntegration(self.config)
+                self.logger.info("✅ MCP工具集成模块已加载")
+            except ImportError as e:
+                self.logger.warning(f"⚠️ MCP工具集成模块加载失败: {e}")
+                self.mcp_integration = None
+
         
-        # 智能查询策略配置
-        self.similarity_threshold = self.config.get("similarity_threshold", 0.5)  # 相似度阈值
-        self.min_vector_results = self.config.get("min_vector_results", 3)  # 最少向量结果数量
+        # 智能查询策略配置 - 提高相似度阈值以过滤不相关内容
+        self.similarity_threshold = self.config.get("similarity_threshold", 0.7)  # 提高相似度阈值到0.7
+        self.min_similarity_for_answer = self.config.get("min_similarity_for_answer", 0.6)  # 生成答案的最低相似度
+        self.min_vector_results = self.config.get("min_vector_results", 2)  # 减少最少向量结果数量
         self.enable_smart_search = self.config.get("enable_smart_search", True)  # 启用智能搜索
+        self.enable_fallback_search = self.config.get("enable_fallback_search", True)  # 启用回退搜索
         
         # 输出配置信息用于调试
         self.logger.info(f"📊 智能搜索配置: similarity_threshold={self.similarity_threshold}, "
+                        f"min_similarity_for_answer={self.min_similarity_for_answer}, "
                         f"min_vector_results={self.min_vector_results}, "
                         f"enable_smart_search={self.enable_smart_search}")
         
         # 初始化配置
         self._init_components()
+    
+    def _init_llm_client(self):
+        """初始化LLM客户端"""
+        try:
+            from core.ask_llm import TencentDeepSeekClient
+            import os
+            
+            # 获取API密钥
+            api_key = os.getenv("DEEPSEEK_API_KEY")
+            
+            if api_key:
+                self.llm_client = TencentDeepSeekClient(api_key=api_key)
+                self.logger.info("✅ 自动创建DeepSeek LLM客户端成功")
+            else:
+                self.logger.warning("⚠️ 未找到LLM API密钥，将使用智能回退模式")
+                self.llm_client = None
+                
+        except Exception as e:
+            self.logger.error(f"❌ 创建LLM客户端失败: {e}")
+            self.llm_client = None
     
     def _init_components(self):
         """初始化各个组件"""
@@ -105,6 +134,10 @@ class EnhancedRAGProcessor:
             # 2. 初始化搜索通道
             self._init_search_channels()
             
+            # 3. 初始化MCP工具集成（异步初始化将在需要时进行）
+            if self.mcp_integration:
+                self.logger.info("🔧 MCP工具集成模块已准备就绪，将在首次使用时初始化")
+            
             self.logger.info("增强RAG处理器初始化完成")
             
         except Exception as e:
@@ -113,39 +146,54 @@ class EnhancedRAGProcessor:
     
     def _init_vector_stores(self):
         """初始化向量存储"""
-        # 获取Milvus配置，优先使用传入的配置
-        milvus_endpoint = (
-            self.config.get("milvus_endpoint") or 
-            self.config.get("endpoint") or 
-            "./milvus_rag.db"
-        )
-        milvus_token = (
-            self.config.get("milvus_token") or 
-            self.config.get("token")
-        )
-        vector_dim = (
-            self.config.get("vector_dim") or 
-            self.config.get("dimension") or 
-            384
-        )
-        
-        # 动态向量存储（用于实时搜索结果）
-        dynamic_store = DynamicVectorStore(
-            milvus_endpoint=milvus_endpoint,
-            milvus_token=milvus_token,
-            collection_name="dynamic_search_results",
-            vector_dim=vector_dim
-        )
-        self.vector_store_manager.add_store("dynamic", dynamic_store)
-        
-        # 本地知识库存储
-        local_store = DynamicVectorStore(
-            milvus_endpoint=milvus_endpoint,
-            milvus_token=milvus_token,
-            collection_name="local_knowledge",
-            vector_dim=vector_dim
-        )
-        self.vector_store_manager.add_store("local", local_store)
+        try:
+            # 获取Milvus配置，优先使用传入的配置
+            milvus_endpoint = (
+                self.config.get("milvus_endpoint") or 
+                self.config.get("endpoint") or 
+                "./milvus_rag.db"
+            )
+            milvus_token = (
+                self.config.get("milvus_token") or 
+                self.config.get("token")
+            )
+            vector_dim = (
+                self.config.get("vector_dim") or 
+                self.config.get("dimension") or 
+                384
+            )
+            
+            self.logger.info(f"🔧 初始化向量存储: endpoint={milvus_endpoint}, dim={vector_dim}")
+            
+            # 动态向量存储（用于实时搜索结果）
+            try:
+                dynamic_store = DynamicVectorStore(
+                    milvus_endpoint=milvus_endpoint,
+                    milvus_token=milvus_token,
+                    collection_name="dynamic_search_results",
+                    vector_dim=vector_dim
+                )
+                self.vector_store_manager.add_store("dynamic", dynamic_store)
+                self.logger.info("✅ 动态向量存储初始化成功")
+            except Exception as e:
+                self.logger.error(f"❌ 动态向量存储初始化失败: {e}")
+            
+            # 本地知识库存储
+            try:
+                local_store = DynamicVectorStore(
+                    milvus_endpoint=milvus_endpoint,
+                    milvus_token=milvus_token,
+                    collection_name="local_knowledge",
+                    vector_dim=vector_dim
+                )
+                self.vector_store_manager.add_store("local", local_store)
+                self.logger.info("✅ 本地知识库存储初始化成功")
+            except Exception as e:
+                self.logger.error(f"❌ 本地知识库存储初始化失败: {e}")
+                
+        except Exception as e:
+            self.logger.error(f"❌ 向量存储初始化失败: {e}")
+            # 不抛出异常，允许系统继续运行，使用备用方法
     
     def _init_search_channels(self):
         """初始化搜索通道"""
@@ -192,6 +240,183 @@ class EnhancedRAGProcessor:
             # news_channel = NewsChannel(news_config)
             # self.mcp_processor.register_channel(news_channel)
     
+    async def _ensure_mcp_initialized(self) -> bool:
+        """确保MCP工具已初始化"""
+        if self.mcp_integration and not hasattr(self.mcp_integration, '_is_initialized'):
+            try:
+                success = await self.mcp_integration.initialize()
+                self.mcp_integration._is_initialized = success
+                if success:
+                    self.logger.info("✅ MCP工具集成延迟初始化成功")
+                else:
+                    self.logger.warning("⚠️ MCP工具集成延迟初始化失败")
+                return success
+            except Exception as e:
+                self.logger.error(f"❌ MCP工具集成延迟初始化异常: {e}")
+                self.mcp_integration._is_initialized = False
+                return False
+        elif self.mcp_integration:
+            return getattr(self.mcp_integration, '_is_initialized', False)
+        return False
+    
+    async def _init_mcp_tools(self):
+        """初始化MCP工具集成"""
+        return await self._ensure_mcp_initialized()
+    
+    async def call_mcp_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """调用MCP工具"""
+        # 确保MCP已初始化
+        if not await self._ensure_mcp_initialized():
+            return {
+                "success": False,
+                "error": "MCP工具集成未初始化或初始化失败",
+                "result": None
+            }
+        
+        try:
+            tool_call = await self.mcp_integration.call_tool_by_name(tool_name, arguments)
+            return {
+                "success": tool_call.success,
+                "error": tool_call.error,
+                "result": tool_call.result,
+                "execution_time": tool_call.execution_time
+            }
+        except Exception as e:
+            self.logger.error(f"MCP工具调用失败: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "result": None
+            }
+    
+    def get_available_mcp_tools(self) -> Dict[str, Dict[str, Any]]:
+        """获取可用的MCP工具"""
+        if self.mcp_integration:
+            return self.mcp_integration.get_tool_definitions()
+        return {}
+    
+    def suggest_mcp_tools_for_query(self, query: str) -> List[str]:
+        """为查询建议合适的MCP工具"""
+        if self.mcp_integration:
+            return self.mcp_integration.suggest_tools_for_query(query)
+        return []
+    
+    async def store_search_results_with_enhanced_processing(self, search_results: List[SearchResult]) -> bool:
+        """
+        公共方法：使用增强文本处理器存储搜索结果到向量数据库
+        
+        Args:
+            search_results: 搜索结果列表
+            
+        Returns:
+            bool: 存储是否成功
+            
+        Features:
+            - 智能文本分块和清理
+            - 中英文混合处理
+            - 内容去重和质量评分
+            - 关键词提取
+            - 语言检测
+        """
+        return await self._store_search_results_to_vector(search_results)
+    
+    async def _store_search_results_to_vector(self, search_results: List[SearchResult]) -> bool:
+        """将搜索结果存储到向量数据库（使用增强文本处理）"""
+        try:
+            if not search_results:
+                self.logger.warning("⚠️ 没有搜索结果需要存储")
+                return False
+            
+            # 转换搜索结果格式
+            formatted_results = []
+            for result in search_results:
+                formatted_results.append({
+                    'title': result.title,
+                    'content': result.content,
+                    'url': result.url,
+                    'source': result.source,
+                    'timestamp': result.timestamp,
+                    'relevance_score': result.relevance_score
+                })
+            
+            # 使用增强文本处理器处理搜索结果
+            text_chunks = self.text_processor.process_search_results(formatted_results)
+            
+            # 优化chunks用于embedding
+            optimized_chunks = self.text_processor.optimize_for_embedding(text_chunks)
+            
+            if not optimized_chunks:
+                self.logger.warning("⚠️ 没有生成有效的文本块")
+                return False
+            
+            # 准备向量存储数据
+            documents = []
+            for chunk in optimized_chunks:
+                documents.append({
+                    'content': chunk.content,
+                    'title': chunk.title,
+                    'url': chunk.url,
+                    'source': 'google_search',
+                    'timestamp': time.time(),
+                    'chunk_id': chunk.chunk_id,
+                    'token_count': chunk.token_count,
+                    'language': chunk.language,
+                    'importance_score': chunk.importance_score,
+                    'keywords': chunk.keywords,
+                    'metadata': chunk.metadata
+                })
+            
+            # 存储到向量数据库
+            # 优先使用外部传入的向量存储，否则使用动态向量存储
+            vector_store = self.vector_store or self.vector_store_manager.get_store("dynamic")
+            
+            if vector_store:
+                # 对于DynamicVectorStore，直接使用原始搜索结果
+                if hasattr(vector_store, 'store_search_results'):
+                    stored_count = await vector_store.store_search_results(search_results)
+                    if stored_count > 0:
+                        self.logger.info(f"✅ 成功存储 {stored_count} 个搜索结果到向量数据库")
+                        return True
+                    else:
+                        self.logger.error("❌ 向量存储失败")
+                        return False
+                # 对于其他类型的向量存储，尝试使用add_documents方法
+                elif hasattr(vector_store, 'add_documents'):
+                    success = await vector_store.add_documents(documents)
+                    if success:
+                        self.logger.info(f"✅ 成功存储 {len(optimized_chunks)} 个优化文本块到向量数据库")
+                        return True
+                    else:
+                        self.logger.error("❌ 向量存储失败")
+                        return False
+                else:
+                    self.logger.error("❌ 向量存储对象不支持存储操作")
+                    return False
+            else:
+                self.logger.warning("⚠️ 向量存储未初始化")
+                self.logger.warning("⚠️ 增强存储失败，尝试使用备用方法")
+                # 尝试使用备用存储方法
+            return await self._fallback_store_search_results(search_results)
+                
+        except Exception as e:
+            self.logger.error(f"❌ 存储搜索结果到向量数据库失败: {e}")
+            import traceback
+            self.logger.error(f"详细错误信息: {traceback.format_exc()}")
+            self.logger.warning("⚠️ 增强存储失败，尝试使用备用方法")
+            # 尝试使用备用存储方法
+            return await self._fallback_store_search_results(search_results)
+    
+    async def _fallback_store_search_results(self, search_results: List[SearchResult]) -> bool:
+        """备用存储方法：使用原始的存储逻辑"""
+        try:
+            self.logger.info("🔄 使用备用存储方法...")
+            await self._store_search_results(search_results)
+            self.logger.info("✅ 备用存储方法执行成功")
+            return True
+        except Exception as e:
+            self.logger.error(f"❌ 备用存储方法也失败了: {e}")
+            return False
+
     async def process_query(self, context: QueryContext) -> RAGResponse:
         """
         智能处理查询请求 - 集成Go demo的分析能力
@@ -213,6 +438,50 @@ class EnhancedRAGProcessor:
             self.logger.info(f"🧠 查询分析完成: {analysis_result.query_type} "
                            f"(置信度: {analysis_result.confidence:.2f})")
             
+            # 特殊处理：如果语义分析错过了明显的计算查询，进行补充检测
+            if not analysis_result.needs_calculation:
+                calc_keywords = ["等于", "加", "减", "乘", "除", "+", "-", "*", "/", "多少"]
+                has_numbers = bool(re.search(r'\d+', query))
+                has_calc_words = any(word in query for word in calc_keywords)
+                
+                if has_numbers and has_calc_words:
+                    self.logger.info("🔧 检测到LLM遗漏的计算查询，启用计算功能")
+                    analysis_result.needs_calculation = True
+                    analysis_result.needs_vector_search = False
+                    
+                    # 使用内置计算解析器
+                    from smart_query_analyzer import SmartQueryAnalyzer
+                    temp_analyzer = SmartQueryAnalyzer()
+                    analysis_result.calculation_args = temp_analyzer._parse_calculation(query)
+                    analysis_result.reasoning += " + 补充检测到计算需求"
+            
+            # 1.5 MCP工具建议和增强
+            if self.mcp_integration:
+                suggested_tools = self.suggest_mcp_tools_for_query(query)
+                if suggested_tools:
+                    self.logger.info(f"🛠️ 建议使用MCP工具: {', '.join(suggested_tools)}")
+                    
+                    # 根据建议的工具调整分析结果
+                    if "calculator" in suggested_tools and not analysis_result.needs_calculation:
+                        # 检查是否应该启用计算
+                        if re.search(r'\d+.*[+\-*/].*\d+', query):
+                            analysis_result.needs_calculation = True
+                            self.logger.info("🔧 根据MCP工具建议启用计算功能")
+                    
+                    if "database_query" in suggested_tools and not analysis_result.needs_database:
+                        # 检查是否应该启用数据库查询
+                        db_keywords = ["用户", "数据", "统计", "查询", "表"]
+                        if any(keyword in query.lower() for keyword in db_keywords):
+                            analysis_result.needs_database = True
+                            # 构建简单的数据库查询参数
+                            analysis_result.database_query = {
+                                "query": "select",
+                                "query_type": "structured", 
+                                "table_name": "users",
+                                "limit": 10
+                            }
+                            self.logger.info("🔧 根据MCP工具建议启用数据库查询功能")
+            
             # 2. 根据分析结果执行相应策略
             search_results = []
             vector_results = []
@@ -222,8 +491,59 @@ class EnhancedRAGProcessor:
             # 计算处理（如果需要）
             if analysis_result.needs_calculation:
                 self.logger.info("🧮 执行数学计算...")
-                calc_result = self.calculator.calculate(analysis_result.calculation_args)
-                calculation_results.append(calc_result)
+                
+                # 优先尝试使用MCP计算器工具
+                mcp_calc_success = False
+                if self.mcp_integration:
+                    # 尝试解析计算表达式
+                    calc_args = analysis_result.calculation_args
+                    if calc_args and isinstance(calc_args, dict):
+                        operation = calc_args.get("operation")
+                        numbers = calc_args.get("numbers", [])
+                        
+                        # 支持基本的二元运算
+                        if operation and len(numbers) >= 2:
+                            mcp_operation_map = {
+                                "+": "add",
+                                "-": "subtract", 
+                                "*": "multiply",
+                                "/": "divide",
+                                "add": "add",
+                                "subtract": "subtract",
+                                "multiply": "multiply", 
+                                "divide": "divide"
+                            }
+                            
+                            mcp_op = mcp_operation_map.get(operation)
+                            if mcp_op:
+                                try:
+                                    mcp_result = await self.call_mcp_tool("calculator", {
+                                        "operation": mcp_op,
+                                        "x": float(numbers[0]),
+                                        "y": float(numbers[1])
+                                    })
+                                    
+                                    if mcp_result["success"]:
+                                        calculation_results.append({
+                                            "type": "mcp_calculation",
+                                            "expression": f"{numbers[0]} {operation} {numbers[1]}",
+                                            "result": mcp_result["result"],
+                                            "tool": "MCP Calculator",
+                                            "execution_time": mcp_result.get("execution_time", 0)
+                                        })
+                                        mcp_calc_success = True
+                                        self.logger.info(f"✅ MCP计算器执行成功: {mcp_result['result']}")
+                                    else:
+                                        self.logger.warning(f"⚠️ MCP计算器执行失败: {mcp_result.get('error')}")
+                                        
+                                except Exception as e:
+                                    self.logger.error(f"❌ MCP计算器调用异常: {e}")
+                
+                # 如果MCP计算失败，使用内置计算器
+                if not mcp_calc_success:
+                    self.logger.info("🔄 使用内置计算器...")
+                    calc_result = self.calculator.calculate(analysis_result.calculation_args)
+                    calculation_results.append(calc_result)
             
             # 向量搜索（如果需要）
             if analysis_result.needs_vector_search:
@@ -257,16 +577,60 @@ class EnhancedRAGProcessor:
                 )
                 search_results = await self._perform_search(search_context)
                 
-                # 存储新的搜索结果到向量数据库
+                # 使用增强文本处理器存储搜索结果到向量数据库
                 if search_results:
-                    await self._store_search_results(search_results)
-                    self.logger.info(f"💾 存储了 {len(search_results)} 个新的搜索结果")
+                    success = await self._store_search_results_to_vector(search_results)
+                    if success:
+                        self.logger.info(f"💾 使用增强处理器成功存储了 {len(search_results)} 个搜索结果")
+                    else:
+                        self.logger.warning("⚠️ 增强存储失败，尝试使用备用方法")
+                        await self._store_search_results(search_results)
             
             # 数据库查询（如果需要）
             if analysis_result.needs_database:
                 self.logger.info("🗄️ 执行数据库查询...")
-                # 这里可以集成实际的数据库查询功能
-                database_results = await self._perform_database_query(analysis_result.database_query)
+                
+                # 优先尝试使用MCP数据库工具
+                mcp_db_success = False
+                if self.mcp_integration and analysis_result.database_query:
+                    try:
+                        db_query = analysis_result.database_query
+                        mcp_db_args = {
+                            "query": db_query.get("query", ""),
+                            "query_type": db_query.get("query_type", "structured"),
+                            "database": db_query.get("database", "default")
+                        }
+                        
+                        # 添加可选参数
+                        optional_params = ["table_name", "fields", "where_conditions", 
+                                         "order_by", "limit", "offset", "group_by", "having"]
+                        for param in optional_params:
+                            if param in db_query:
+                                mcp_db_args[param] = db_query[param]
+                        
+                        mcp_result = await self.call_mcp_tool("database_query", mcp_db_args)
+                        
+                        if mcp_result["success"]:
+                            database_results.append({
+                                "type": "mcp_database",
+                                "query": mcp_db_args,
+                                "result": mcp_result["result"],
+                                "source": "MCP数据库工具",
+                                "timestamp": time.time(),
+                                "execution_time": mcp_result.get("execution_time", 0)
+                            })
+                            mcp_db_success = True
+                            self.logger.info("✅ MCP数据库查询执行成功")
+                        else:
+                            self.logger.warning(f"⚠️ MCP数据库查询失败: {mcp_result.get('error')}")
+                            
+                    except Exception as e:
+                        self.logger.error(f"❌ MCP数据库查询异常: {e}")
+                
+                # 如果MCP数据库查询失败，使用内置方法
+                if not mcp_db_success:
+                    self.logger.info("🔄 使用内置数据库查询方法...")
+                    database_results = await self._perform_database_query(analysis_result.database_query)
             
             # 3. 融合所有结果
             all_results = self._merge_all_results(
@@ -320,58 +684,6 @@ class EnhancedRAGProcessor:
                 confidence_score=0.0,
                 metadata={"error": str(e), "fallback": True}
             )
-    
-    def _should_perform_search(self, vector_results: List[Dict[str, Any]], context: QueryContext) -> Tuple[bool, str]:
-        """
-        判断是否需要执行搜索引擎查询
-        
-        Returns:
-            Tuple[bool, str]: (是否需要搜索, 原因说明)
-        """
-        if not self.enable_smart_search:
-            return True, "智能搜索已禁用"
-        
-        if not vector_results:
-            return True, "向量数据库中没有相关结果"
-        
-        # 检查结果数量
-        if len(vector_results) < self.min_vector_results:
-            return True, f"向量结果数量不足 ({len(vector_results)} < {self.min_vector_results})"
-        
-        # 检查最高相似度
-        max_similarity = max(result.get("similarity_score", 0) for result in vector_results)
-        if max_similarity < self.similarity_threshold:
-            return True, f"最高相似度不足 ({max_similarity:.3f} < {self.similarity_threshold})"
-        
-        # 检查高质量结果数量
-        high_quality_results = [
-            r for r in vector_results 
-            if r.get("similarity_score", 0) >= self.similarity_threshold
-        ]
-        
-        if len(high_quality_results) < 2:
-            return True, f"高质量结果数量不足 ({len(high_quality_results)} < 2)"
-        
-        # 检查内容新鲜度（可选）
-        current_time = time.time()
-        recent_results = [
-            r for r in high_quality_results
-            if current_time - r.get("timestamp", 0) < 7 * 24 * 3600  # 7天内
-        ]
-        
-        if len(recent_results) == 0:
-            return True, "没有足够新鲜的高质量结果"
-        
-        # 特殊查询类型处理
-        if context.query_type == QueryType.CREATIVE:
-            return True, "创造性查询需要实时搜索"
-        
-        # 检查查询中是否包含时间相关词汇
-        time_keywords = ["今天", "最新", "现在", "当前", "最近", "今年", "2024", "2025"]
-        if any(keyword in context.query for keyword in time_keywords):
-            return True, "查询包含时间相关词汇，需要最新信息"
-        
-        return False, f"向量数据库有足够的高质量结果 ({len(high_quality_results)} 个，最高相似度: {max_similarity:.3f})"
     
     async def _perform_search(self, context: QueryContext) -> List[SearchResult]:
         """执行实时搜索"""
@@ -460,94 +772,6 @@ class EnhancedRAGProcessor:
         
         return deduplicated
     
-    async def _generate_answer(self, 
-                              query: str, 
-                              results: List[Dict[str, Any]]) -> Tuple[str, float]:
-        """生成答案"""
-        try:
-            if not results:
-                return "抱歉，没有找到相关信息来回答您的问题。", 0.0
-            
-            # 构建上下文
-            context_parts = []
-            for i, result in enumerate(results[:5]):  # 使用前5个最相关的结果
-                content = result.get("content", "").strip()
-                if content:
-                    source_info = f"来源: {result.get('title', '未知')} ({result.get('source', '未知')})"
-                    context_parts.append(f"参考资料 {i+1}:\n{content}\n{source_info}")
-            
-            context = "\n\n".join(context_parts)
-            
-            # 调用DeepSeek LLM生成答案
-            try:
-                # 使用传入的LLM客户端
-                if hasattr(self, 'llm_client') and self.llm_client:
-                    # 构建消息格式
-                    messages = []
-                    
-                    if context:
-                        system_prompt = """
-你是一个智能助手。请基于提供的上下文信息回答用户问题。
-如果上下文信息充分，请优先使用上下文中的信息回答。
-如果上下文信息不够充分，可以结合你的知识给出有帮助的回答。
-请确保回答准确、有条理，并尽可能提供具体的信息。
-请提供完整详细的回答，不要截断内容。
-"""
-                        messages.append({"role": "system", "content": system_prompt})
-                        
-                        user_content = f"""
-基于以下上下文信息回答问题：
-
-{context}
-
-问题：{query}
-"""
-                    else:
-                        user_content = query
-                    
-                    messages.append({"role": "user", "content": user_content})
-                    
-                    # 调用DeepSeek API - 添加重要参数
-                    response = self.llm_client.chat_completions_create(
-                        model="deepseek-v3-0324",
-                        messages=messages,
-                        stream=False,
-                        enable_search=True,  # 启用DeepSeek的搜索功能
-                        temperature=0.7,     # 设置创造性参数
-                        top_p=0.9,          # 设置核采样参数
-                        frequency_penalty=0.0,  # 频率惩罚
-                        presence_penalty=0.0    # 存在惩罚
-                    )
-                    
-                    if response and "choices" in response:
-                        answer = response["choices"][0]["message"]["content"]
-                    else:
-                        answer = "抱歉，无法生成回答"
-                        
-                else:
-                    # 降级到简单的上下文拼接
-                    if context:
-                        answer = f"基于搜索结果：\n\n{context}\n\n回答：请参考以上信息来回答关于'{query}'的问题。"
-                    else:
-                        answer = f"抱歉，没有找到关于'{query}'的相关信息。"
-                        
-            except Exception as e:
-                self.logger.error(f"LLM调用失败: {e}")
-                # 降级方案
-                if context:
-                    answer = f"基于搜索到的信息：\n\n{context}"
-                else:
-                    answer = f"抱歉，处理您的问题时出现了错误：{str(e)}"
-            
-            # 计算置信度（基于结果数量和相关性）
-            confidence = min(1.0, len(results) * 0.1 + sum(r.get("score", 0) for r in results[:3]) / 3)
-            
-            return answer, confidence
-            
-        except Exception as e:
-            self.logger.error(f"生成答案失败: {e}")
-            return f"生成答案时出现错误: {str(e)}", 0.0
-    
     def _extract_sources(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """提取来源信息"""
         sources = []
@@ -562,18 +786,6 @@ class EnhancedRAGProcessor:
             sources.append(source)
         
         return sources
-    
-    async def cleanup_old_data(self, max_age_hours: int = 24):
-        """清理过期数据"""
-        try:
-            dynamic_store = self.vector_store_manager.get_store("dynamic")
-            if dynamic_store:
-                cleaned_count = await dynamic_store.cleanup_old_documents(max_age_hours)
-                self.logger.info(f"清理了 {cleaned_count} 个过期文档")
-                return cleaned_count
-        except Exception as e:
-            self.logger.error(f"清理过期数据失败: {e}")
-        return 0
     
     def update_smart_search_config(self, 
                                   similarity_threshold: float = None,
@@ -591,15 +803,6 @@ class EnhancedRAGProcessor:
         if enable_smart_search is not None:
             self.enable_smart_search = enable_smart_search
             self.logger.info(f"智能搜索开关: {enable_smart_search}")
-    
-    def get_smart_search_stats(self) -> Dict[str, Any]:
-        """获取智能搜索统计信息"""
-        return {
-            "similarity_threshold": self.similarity_threshold,
-            "min_vector_results": self.min_vector_results,
-            "enable_smart_search": self.enable_smart_search,
-            "vector_stores": list(self.vector_store_manager.stores.keys())
-        }
     
     async def _perform_database_query(self, query_args: Dict[str, Any]) -> List[Dict[str, Any]]:
         """执行数据库查询（模拟实现）"""
@@ -727,21 +930,24 @@ class EnhancedRAGProcessor:
         try:
             # 调用LLM生成答案
             if hasattr(self, 'llm_client') and self.llm_client:
-                # 使用真实的LLM客户端
-                answer = get_llm_answer_deepseek(
+                # 使用真实的LLM客户端 - 直接使用构建好的prompt
+                answer = get_llm_answer_with_prompt(
                     client=self.llm_client,
-                    context=context,
-                    question=query
+                    prompt=prompt  # 使用构建好的prompt
                 )
             else:
-                # 使用mock函数
-                answer = f"基于分析结果回答：{prompt[:200]}..."
+                # LLM不可用时，使用智能回退答案生成
+                self.logger.warning("⚠️ LLM客户端不可用，使用智能回退模式")
+                answer = self._synthesize_intelligent_answer(query, context, analysis)
             
             # 计算置信度
             avg_confidence = sum(confidence_factors) / len(confidence_factors) if confidence_factors else 0.5
             final_confidence = min(0.95, avg_confidence * analysis.confidence)
             
-            return answer, final_confidence
+            # 格式化答案
+            formatted_answer = self._format_answer(answer)
+            
+            return formatted_answer, final_confidence
             
         except Exception as e:
             self.logger.error(f"LLM答案生成失败: {e}")
@@ -782,17 +988,6 @@ class EnhancedRAGProcessor:
 
 请综合以上信息，为用户提供准确、有用的回答。如果信息来源于不同渠道，请适当整合。"""
     
-    def _generate_fallback_answer(self, query: str, analysis: QueryAnalysisResult) -> str:
-        """生成备用答案"""
-        if analysis.query_type == "time":
-            return "抱歉，我无法获取当前的时间信息。请检查网络连接或稍后再试。"
-        elif analysis.query_type == "calculation":
-            return f"抱歉，无法完成计算：{query}。请检查表达式是否正确。"
-        elif analysis.query_type == "technical":
-            return f"关于您询问的技术问题「{query}」，我暂时没有找到相关信息。建议您查阅官方文档或技术论坛。"
-        else:
-            return f"抱歉，我暂时无法回答您的问题「{query}」。请尝试重新表述或提供更多上下文。"
-    
     def _synthesize_answer_fallback(self, query: str, results: List[Dict[str, Any]]) -> str:
         """合成备用答案"""
         if not results:
@@ -813,3 +1008,94 @@ class EnhancedRAGProcessor:
         
         answer_parts.append("\n以上信息供您参考。")
         return "\n\n".join(answer_parts)
+    
+    def _format_answer(self, answer: str) -> str:
+        """格式化答案输出，美化Markdown内容"""
+        if not answer:
+            return answer
+        
+        try:
+            # 移除转义字符，恢复正常的换行符
+            formatted = answer.replace('\\n', '\n').replace('\\"', '"').replace("\\'", "'")
+            
+            # 处理代码块格式
+            
+            # 确保代码块有正确的换行
+            formatted = re.sub(r'```(\w*)\n?', r'```\1\n', formatted)
+            formatted = re.sub(r'\n?```', r'\n```', formatted)
+            
+            # 处理标题格式，确保标题前后有适当的空行
+            formatted = re.sub(r'\n(#{1,6}\s+[^\n]+)', r'\n\n\1', formatted)
+            formatted = re.sub(r'(#{1,6}\s+[^\n]+)\n([^#\n])', r'\1\n\n\2', formatted)
+            
+            # 处理列表项，确保格式正确
+            formatted = re.sub(r'\n-\s+', r'\n- ', formatted)
+            formatted = re.sub(r'\n\*\s+', r'\n* ', formatted)
+            formatted = re.sub(r'\n(\d+\.)\s+', r'\n\1 ', formatted)
+            
+            # 处理段落间距，确保段落之间有适当的空行
+            formatted = re.sub(r'\n\n\n+', r'\n\n', formatted)
+            
+            # 处理粗体和斜体格式
+            formatted = re.sub(r'\*\*([^*]+)\*\*', r'**\1**', formatted)
+            formatted = re.sub(r'\*([^*]+)\*', r'*\1*', formatted)
+            
+            # 清理开头和结尾的多余空行
+            formatted = formatted.strip()
+            
+            # 确保内容有良好的结构
+            if formatted:
+                # 如果内容很长，添加一个简洁的开头
+                if len(formatted) > 1000 and not formatted.startswith('## ') and not formatted.startswith('# '):
+                    lines = formatted.split('\n')
+                    if len(lines) > 3:
+                        # 检查是否需要添加概述
+                        first_line = lines[0].strip()
+                        if len(first_line) > 50 and '##' not in first_line:
+                            formatted = f"**概述：** {first_line}\n\n{formatted}"
+            
+            return formatted
+            
+        except Exception as e:
+            self.logger.error(f"格式化答案时出错: {e}")
+            # 如果格式化失败，至少处理基本的转义字符
+            return answer.replace('\\n', '\n').replace('\\"', '"').replace("\\'", "'")
+    
+    def _beautify_technical_content(self, content: str) -> str:
+        """专门美化技术内容"""
+        if not content:
+            return content
+            
+        try:
+            
+            # 添加技术文档的标准格式
+            formatted = content
+            
+            # 为代码示例添加语法高亮提示
+            formatted = re.sub(r'```\n(public class|import|package)', r'```java\n\1', formatted)
+            formatted = re.sub(r'```\n(def |import |from |class )', r'```python\n\1', formatted)
+            formatted = re.sub(r'```\n(<\?xml|<html|<div)', r'```xml\n\1', formatted)
+            
+            # 美化技术术语
+            tech_terms = {
+                'JDK': '**JDK (Java开发工具包)**',
+                'JRE': '**JRE (Java运行时环境)**', 
+                'JVM': '**JVM (Java虚拟机)**',
+                'API': '**API**',
+                'IDE': '**IDE**',
+                'SDK': '**SDK**'
+            }
+            
+            for term, formatted_term in tech_terms.items():
+                # 只替换单独出现的术语，避免替换URL或代码中的内容
+                formatted = re.sub(rf'\b{term}\b(?![/:])', formatted_term, formatted)
+            
+            # 添加技术要点的视觉分隔
+            if '## 主要特性' in formatted or '## 基本特性' in formatted:
+                formatted = f"📋 **技术文档**\n\n{formatted}"
+            
+            return formatted
+            
+        except Exception as e:
+            self.logger.error(f"美化技术内容时出错: {e}")
+            return content
