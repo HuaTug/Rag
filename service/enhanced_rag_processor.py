@@ -16,8 +16,8 @@ from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
 from dotenv import load_dotenv
 
-from .channel_framework import MProcessor, QueryContext, QueryAnalyzer, QueryType, SearchResult
-from .smart_query_analyzer import SmartQueryAnalyzer, QueryAnalysisResult, SimpleCalculator
+from channel_framework import MProcessor, QueryContext, QueryAnalyzer, QueryType, SearchResult
+from smart_query_analyzer import SmartQueryAnalyzer, QueryAnalysisResult
 # 导入core模块
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'core'))
 from core.search_channels import GoogleSearchChannel
@@ -62,7 +62,6 @@ class EnhancedRAGProcessor:
         
         # 新增智能查询分析器
         self.smart_analyzer = SmartQueryAnalyzer(self.config)
-        self.calculator = SimpleCalculator()
 
         # 新增：初始化增强文本处理器
         from core.enhanced_text_processor import create_enhanced_text_processor
@@ -438,23 +437,6 @@ class EnhancedRAGProcessor:
             self.logger.info(f"🧠 查询分析完成: {analysis_result.query_type} "
                            f"(置信度: {analysis_result.confidence:.2f})")
             
-            # 特殊处理：如果语义分析错过了明显的计算查询，进行补充检测
-            if not analysis_result.needs_calculation:
-                calc_keywords = ["等于", "加", "减", "乘", "除", "+", "-", "*", "/", "多少"]
-                has_numbers = bool(re.search(r'\d+', query))
-                has_calc_words = any(word in query for word in calc_keywords)
-                
-                if has_numbers and has_calc_words:
-                    self.logger.info("🔧 检测到LLM遗漏的计算查询，启用计算功能")
-                    analysis_result.needs_calculation = True
-                    analysis_result.needs_vector_search = False
-                    
-                    # 使用内置计算解析器
-                    from smart_query_analyzer import SmartQueryAnalyzer
-                    temp_analyzer = SmartQueryAnalyzer()
-                    analysis_result.calculation_args = temp_analyzer._parse_calculation(query)
-                    analysis_result.reasoning += " + 补充检测到计算需求"
-            
             # 1.5 MCP工具建议和增强
             if self.mcp_integration:
                 suggested_tools = self.suggest_mcp_tools_for_query(query)
@@ -499,51 +481,93 @@ class EnhancedRAGProcessor:
                     calc_args = analysis_result.calculation_args
                     if calc_args and isinstance(calc_args, dict):
                         operation = calc_args.get("operation")
-                        numbers = calc_args.get("numbers", [])
                         
                         # 支持基本的二元运算
-                        if operation and len(numbers) >= 2:
-                            mcp_operation_map = {
-                                "+": "add",
-                                "-": "subtract", 
-                                "*": "multiply",
-                                "/": "divide",
-                                "add": "add",
-                                "subtract": "subtract",
-                                "multiply": "multiply", 
-                                "divide": "divide"
-                            }
+                        if operation in ["add", "subtract", "multiply", "divide"]:
+                            # 直接使用x和y参数
+                            x = calc_args.get("x")
+                            y = calc_args.get("y")
                             
-                            mcp_op = mcp_operation_map.get(operation)
-                            if mcp_op:
+                            if x is not None and y is not None:
                                 try:
                                     mcp_result = await self.call_mcp_tool("calculator", {
-                                        "operation": mcp_op,
-                                        "x": float(numbers[0]),
-                                        "y": float(numbers[1])
+                                        "operation": operation,
+                                        "x": float(x),
+                                        "y": float(y)
                                     })
                                     
                                     if mcp_result["success"]:
+                                        operation_symbols = {
+                                            "add": "+",
+                                            "subtract": "-",
+                                            "multiply": "*",
+                                            "divide": "/"
+                                        }
+                                        symbol = operation_symbols.get(operation, operation)
                                         calculation_results.append({
                                             "type": "mcp_calculation",
-                                            "expression": f"{numbers[0]} {operation} {numbers[1]}",
+                                            "expression": f"{x} {symbol} {y}",
                                             "result": mcp_result["result"],
                                             "tool": "MCP Calculator",
                                             "execution_time": mcp_result.get("execution_time", 0)
                                         })
                                         mcp_calc_success = True
-                                        self.logger.info(f"✅ MCP计算器执行成功: {mcp_result['result']}")
+                                        self.logger.info(f"✅ MCP计算器执行成功: {x} {symbol} {y} = {mcp_result['result']}")
                                     else:
                                         self.logger.warning(f"⚠️ MCP计算器执行失败: {mcp_result.get('error')}")
                                         
                                 except Exception as e:
                                     self.logger.error(f"❌ MCP计算器调用异常: {e}")
-                
-                # 如果MCP计算失败，使用内置计算器
-                if not mcp_calc_success:
-                    self.logger.info("🔄 使用内置计算器...")
-                    calc_result = self.calculator.calculate(analysis_result.calculation_args)
-                    calculation_results.append(calc_result)
+                        
+                        elif operation == "get_current_date":
+                            # 获取当前日期
+                            try:
+                                mcp_result = await self.call_mcp_tool("calculator", {
+                                    "operation": "get_current_date"
+                                })
+                                
+                                if mcp_result["success"]:
+                                    calculation_results.append({
+                                        "type": "mcp_calculation",
+                                        "expression": "获取当前日期",
+                                        "result": mcp_result["result"],
+                                        "tool": "MCP Calculator",
+                                        "execution_time": mcp_result.get("execution_time", 0)
+                                    })
+                                    mcp_calc_success = True
+                                    self.logger.info(f"✅ MCP日期查询成功: {mcp_result['result']}")
+                                else:
+                                    self.logger.warning(f"⚠️ MCP日期查询失败: {mcp_result.get('error')}")
+                                    
+                            except Exception as e:
+                                self.logger.error(f"❌ MCP日期查询异常: {e}")
+                        
+                        elif operation == "expression":
+                            # 表达式计算
+                            expression = calc_args.get("expression", "")
+                            if expression:
+                                try:
+                                    mcp_result = await self.call_mcp_tool("calculator", {
+                                        "operation": "expression",
+                                        "expression": expression
+                                    })
+                                    
+                                    if mcp_result["success"]:
+                                        calculation_results.append({
+                                            "type": "mcp_calculation",
+                                            "expression": expression,
+                                            "result": mcp_result["result"],
+                                            "tool": "MCP Calculator",
+                                            "execution_time": mcp_result.get("execution_time", 0)
+                                        })
+                                        mcp_calc_success = True
+                                        self.logger.info(f"✅ MCP表达式计算成功: {expression} = {mcp_result['result']}")
+                                    else:
+                                        self.logger.warning(f"⚠️ MCP表达式计算失败: {mcp_result.get('error')}")
+                                        
+                                except Exception as e:
+                                    self.logger.error(f"❌ MCP表达式计算异常: {e}")
+    
             
             # 向量搜索（如果需要）
             if analysis_result.needs_vector_search:
@@ -1060,6 +1084,93 @@ class EnhancedRAGProcessor:
             self.logger.error(f"格式化答案时出错: {e}")
             # 如果格式化失败，至少处理基本的转义字符
             return answer.replace('\\n', '\n').replace('\\"', '"').replace("\\'", "'")
+    
+    def _generate_fallback_answer(self, query: str, analysis: QueryAnalysisResult) -> str:
+        """生成回退答案 - 当没有搜索结果时使用"""
+        fallback_messages = {
+            "time": f"抱歉，我无法获取当前的时间信息来回答「{query}」。请您查看系统时间或联网获取最新时间。",
+            "calculation": f"抱歉，我无法计算「{query}」。请检查计算表达式是否正确，或使用计算器工具。",
+            "technical": f"关于「{query}」这个技术问题，我暂时没有找到相关资料。建议您：\n\n1. 查阅官方文档\n2. 搜索技术论坛\n3. 咨询技术专家",
+            "database": f"抱歉，我无法查询到「{query}」相关的数据库信息。请检查查询条件或联系管理员。",
+            "general": f"关于您的问题「{query}」，我暂时没有找到相关信息。建议您：\n\n1. 尝试重新描述问题\n2. 使用更具体的关键词\n3. 或者联网搜索获取最新信息"
+        }
+        
+        query_type = analysis.query_type if analysis else "general"
+        message = fallback_messages.get(query_type, fallback_messages["general"])
+        
+        # 添加分析推理信息（如果有的话）
+        if analysis and analysis.reasoning:
+            message += f"\n\n**分析说明：** {analysis.reasoning}"
+        
+        return message
+    
+    def _synthesize_intelligent_answer(self, query: str, context: str, analysis: QueryAnalysisResult) -> str:
+        """智能合成答案 - 当LLM不可用时的智能回退"""
+        try:
+            # 根据查询类型和上下文智能生成答案
+            if analysis.query_type == "calculation":
+                # 查找计算结果
+                calc_pattern = r'\[计算结果\]\s*([^=]+)=\s*([^\n]+)'
+                calc_match = re.search(calc_pattern, context)
+                if calc_match:
+                    expression = calc_match.group(1).strip()
+                    result = calc_match.group(2).strip()
+                    return f"根据计算，{expression} = **{result}**"
+                else:
+                    return f"关于计算问题「{query}」，我找到了相关信息：\n\n{context[:300]}..."
+            
+            elif analysis.query_type == "time":
+                # 查找时间信息
+                time_keywords = ["时间", "日期", "今天", "现在", "当前"]
+                if any(keyword in context for keyword in time_keywords):
+                    # 提取时间相关信息
+                    lines = context.split('\n')
+                    time_info = []
+                    for line in lines:
+                        if any(keyword in line for keyword in time_keywords):
+                            time_info.append(line.strip())
+                    
+                    if time_info:
+                        return f"根据最新信息：\n\n" + "\n".join(time_info[:3])
+                
+                return f"关于时间问题「{query}」，我找到了以下信息：\n\n{context[:300]}..."
+            
+            elif analysis.query_type == "database":
+                # 查找数据库结果
+                if "[数据库]" in context:
+                    db_info = []
+                    lines = context.split('\n')
+                    for line in lines:
+                        if "[数据库]" in line:
+                            db_info.append(line.replace("[数据库]", "").strip())
+                    
+                    if db_info:
+                        return f"数据库查询结果：\n\n" + "\n".join(db_info)
+                
+                return f"关于数据查询「{query}」，我找到了以下信息：\n\n{context[:300]}..."
+            
+            else:
+                # 通用智能合成
+                # 提取关键信息片段
+                segments = context.split('\n\n')
+                key_segments = []
+                
+                for segment in segments[:5]:  # 最多处理5个段落
+                    segment = segment.strip()
+                    if len(segment) > 50:  # 过滤太短的片段
+                        # 移除标记符号
+                        clean_segment = re.sub(r'\[.*?\]\s*', '', segment)
+                        key_segments.append(clean_segment[:200])  # 限制长度
+                
+                if key_segments:
+                    return f"关于「{query}」，我整理了以下相关信息：\n\n" + "\n\n".join(f"• {seg}" for seg in key_segments[:3])
+                else:
+                    return f"关于「{query}」，我找到了一些相关信息，但可能需要进一步查证：\n\n{context[:400]}..."
+        
+        except Exception as e:
+            self.logger.error(f"智能答案合成失败: {e}")
+            # 最基本的回退
+            return f"关于「{query}」，我找到了一些信息：\n\n{context[:300]}...\n\n以上信息供您参考。"
     
     def _beautify_technical_content(self, content: str) -> str:
         """专门美化技术内容"""

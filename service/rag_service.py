@@ -125,7 +125,8 @@ class RAGService:
             "google_api_key": os.getenv("GOOGLE_API_KEY"),
             "google_search_engine_id": os.getenv("GOOGLE_SEARCH_ENGINE_ID"),
             "enable_search_engine": True,
-            "search_timeout": 10
+            "search_timeout": 10,
+            "enable_mcp_tools":True,
         }
         
         # 合并配置

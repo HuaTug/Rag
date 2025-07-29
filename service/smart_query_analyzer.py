@@ -16,6 +16,7 @@ import time
 from dataclasses import dataclass
 from typing import Dict, Any, List
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # 添加项目根目录到Python路径
@@ -582,56 +583,3 @@ class SmartQueryAnalyzer:
             return "vector_only"  # 仅向量
         else:
             return "direct_llm"  # 直接LLM
-
-
-# 简单的数学计算器
-class SimpleCalculator:
-    """简单计算器 - 处理基本数学运算"""
-    
-    @staticmethod
-    def calculate(args: Dict[str, Any]) -> Dict[str, Any]:
-        """执行计算"""
-        operation = args.get("operation", "")
-        
-        try:
-            if operation == "get_current_date":
-                # 获取当前日期
-                from datetime import datetime
-                now = datetime.now()
-                date_str = now.strftime("%Y年%m月%d日")
-                weekday = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"][now.weekday()]
-                return {
-                    "result": f"今天是{date_str}，{weekday}",
-                    "expression": f"当前日期: {date_str} ({weekday})"
-                }
-                
-            elif operation == "add":
-                result = float(args["x"]) + float(args["y"])
-                return {"result": result, "expression": f"{args['x']} + {args['y']} = {result}"}
-            
-            elif operation == "subtract":
-                result = float(args["x"]) - float(args["y"])
-                return {"result": result, "expression": f"{args['x']} - {args['y']} = {result}"}
-            
-            elif operation == "multiply":
-                result = float(args["x"]) * float(args["y"])
-                return {"result": result, "expression": f"{args['x']} × {args['y']} = {result}"}
-            
-            elif operation == "divide":
-                if float(args["y"]) == 0:
-                    return {"error": "除数不能为零"}
-                result = float(args["x"]) / float(args["y"])
-                return {"result": result, "expression": f"{args['x']} ÷ {args['y']} = {result}"}
-            
-            elif operation == "expression":
-                # 简单的表达式计算（安全起见，只支持基本运算）
-                expression = args.get("expression", "")
-                # 这里可以集成更复杂的表达式解析器
-                return {"result": "表达式计算功能待实现", "expression": expression}
-            
-            else:
-                return {"error": f"不支持的运算类型: {operation}"}
-        
-        except Exception as e:
-            return {"error": f"计算错误: {str(e)}"}
-
