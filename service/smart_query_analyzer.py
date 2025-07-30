@@ -141,9 +141,9 @@ class SmartQueryAnalyzer:
             # 调用LLM进行分析
             try:
                 # 获取API密钥
-                api_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("TENCENT_API_KEY")
+                api_key = os.getenv("DEEPSEEK_API_KEY")
                 if not api_key:
-                    raise ValueError("需要设置DEEPSEEK_API_KEY或TENCENT_API_KEY环境变量")
+                    raise ValueError("需要设置DEEPSEEK_API_KEY环境变量")
                 
                 # 创建客户端并调用统一函数
                 client = TencentDeepSeekClient(api_key=api_key)
@@ -161,7 +161,8 @@ class SmartQueryAnalyzer:
             
             # 解析分析结果
             analysis = self._parse_llm_response(response, query)
-            
+            self.logger.info(f"📝 解析LLM后的结果为: {analysis}")
+
             # 智能填充工具参数
             self._fill_tool_parameters(analysis, query)
             

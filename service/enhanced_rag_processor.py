@@ -16,7 +16,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
 from dotenv import load_dotenv
 
-from channel_framework import MProcessor, QueryContext, QueryAnalyzer, QueryType, SearchResult
+from channel_framework import MProcessor, QueryContext, QueryAnalyzer, QueryType, SearchResult, ChannelType
 from smart_query_analyzer import SmartQueryAnalyzer, QueryAnalysisResult
 # 导入core模块
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'core'))
@@ -463,6 +463,14 @@ class EnhancedRAGProcessor:
                                 "limit": 10
                             }
                             self.logger.info("🔧 根据MCP工具建议启用数据库查询功能")
+                    
+                    # 新增：根据MCP工具建议启用网络搜索
+                    if "web_search" in suggested_tools and not analysis_result.needs_web_search:
+                        search_keywords = ["最新", "新闻", "实时", "当前", "今天", "现在", "搜索"]
+                        if any(keyword in query.lower() for keyword in search_keywords):
+                            analysis_result.needs_web_search = True
+                            analysis_result.web_search_query = query
+                            self.logger.info("🔧 根据MCP工具建议启用网络搜索功能")
             
             # 2. 根据分析结果执行相应策略
             search_results = []
@@ -475,7 +483,6 @@ class EnhancedRAGProcessor:
                 self.logger.info("🧮 执行数学计算...")
                 
                 # 优先尝试使用MCP计算器工具
-                mcp_calc_success = False
                 if self.mcp_integration:
                     # 尝试解析计算表达式
                     calc_args = analysis_result.calculation_args
@@ -511,37 +518,13 @@ class EnhancedRAGProcessor:
                                             "tool": "MCP Calculator",
                                             "execution_time": mcp_result.get("execution_time", 0)
                                         })
-                                        mcp_calc_success = True
                                         self.logger.info(f"✅ MCP计算器执行成功: {x} {symbol} {y} = {mcp_result['result']}")
                                     else:
                                         self.logger.warning(f"⚠️ MCP计算器执行失败: {mcp_result.get('error')}")
                                         
                                 except Exception as e:
                                     self.logger.error(f"❌ MCP计算器调用异常: {e}")
-                        
-                        elif operation == "get_current_date":
-                            # 获取当前日期
-                            try:
-                                mcp_result = await self.call_mcp_tool("calculator", {
-                                    "operation": "get_current_date"
-                                })
-                                
-                                if mcp_result["success"]:
-                                    calculation_results.append({
-                                        "type": "mcp_calculation",
-                                        "expression": "获取当前日期",
-                                        "result": mcp_result["result"],
-                                        "tool": "MCP Calculator",
-                                        "execution_time": mcp_result.get("execution_time", 0)
-                                    })
-                                    mcp_calc_success = True
-                                    self.logger.info(f"✅ MCP日期查询成功: {mcp_result['result']}")
-                                else:
-                                    self.logger.warning(f"⚠️ MCP日期查询失败: {mcp_result.get('error')}")
-                                    
-                            except Exception as e:
-                                self.logger.error(f"❌ MCP日期查询异常: {e}")
-                        
+
                         elif operation == "expression":
                             # 表达式计算
                             expression = calc_args.get("expression", "")
@@ -593,14 +576,155 @@ class EnhancedRAGProcessor:
             # 网络搜索（如果需要）
             if analysis_result.needs_web_search:
                 self.logger.info(f"🌐 执行网络搜索: {analysis_result.web_search_query}")
-                search_context = QueryContext(
-                    query=analysis_result.web_search_query,
-                    query_type=context.query_type,
-                    max_results=context.max_results,
-                    timeout=context.timeout
-                )
-                search_results = await self._perform_search(search_context)
                 
+                # 优先尝试使用MCP网络搜索工具
+                mcp_search_success = False
+                if self.mcp_integration:
+                    try:
+                        search_limit = min(context.max_results, 10)
+                        mcp_result = await self.call_mcp_tool("web_search", {
+                            "query": analysis_result.web_search_query,
+                            "limit": search_limit,
+                        })
+                        self.logger.info(f"🔍 MCP网络搜索原始结果: {mcp_result}")
+
+                        if mcp_result["success"]:
+                            # 添加详细的调试信息
+                            debug_info = self.debug_mcp_search_result(mcp_result)
+                            self.logger.info(f"🔧 MCP搜索结果调试信息: {debug_info}")
+                            
+                            mcp_search_data = mcp_result["result"]
+                            self.logger.info(f"📝 MCP搜索数据类型: {type(mcp_search_data)}")
+                            
+                            # 处理不同格式的MCP搜索结果
+                            mcp_search_results = []
+                            
+                            if isinstance(mcp_search_data, dict):
+                                # 情况1: 标准字典格式 {"results": [...]}
+                                if "results" in mcp_search_data and isinstance(mcp_search_data["results"], list):
+                                    for item in mcp_search_data["results"]:
+                                        search_result = self._safe_create_search_result(
+                                            title=item.get("title", ""),
+                                            content=item.get("snippet", item.get("content", "")),
+                                            url=item.get("url", item.get("link", "")),
+                                            source="MCP Web Search",
+                                            relevance_score=item.get("relevance_score", 0.8),
+                                            channel_type="MCP_SEARCH"
+                                        )
+                                        mcp_search_results.append(search_result)
+                                    
+                                    mcp_search_success = True
+                                    self.logger.info(f"✅ MCP网络搜索成功(标准格式)，获得 {len(mcp_search_results)} 个结果")
+                                
+                                # 情况2: 直接是搜索结果字典 {"title": ..., "content": ...}
+                                elif "title" in mcp_search_data or "content" in mcp_search_data:
+                                    search_result = self._safe_create_search_result(
+                                        title=mcp_search_data.get("title", ""),
+                                        content=mcp_search_data.get("snippet", mcp_search_data.get("content", "")),
+                                        url=mcp_search_data.get("url", mcp_search_data.get("link", "")),
+                                        source="MCP Web Search",
+                                        relevance_score=mcp_search_data.get("relevance_score", 0.8),
+                                        channel_type="MCP_SEARCH"
+                                    )
+                                    mcp_search_results.append(search_result)
+                                    
+                                    mcp_search_success = True
+                                    self.logger.info(f"✅ MCP网络搜索成功(单结果格式)，获得 1 个结果")
+                                
+                                # 情况3: 其他字典格式，尝试解析
+                                else:
+                                    self.logger.warning(f"⚠️ MCP搜索结果为字典但格式未知，尝试通用解析: {list(mcp_search_data.keys())}")
+                                    # 尝试将整个字典作为一个搜索结果
+                                    content = str(mcp_search_data)[:500]  # 截取前500字符
+                                    search_result = self._safe_create_search_result(
+                                        title="MCP搜索结果",
+                                        content=content,
+                                        url="",
+                                        source="MCP Web Search (Raw)",
+                                        relevance_score=0.6,
+                                        channel_type="MCP_SEARCH"
+                                    )
+                                    mcp_search_results.append(search_result)
+                                    
+                                    mcp_search_success = True
+                                    self.logger.info(f"✅ MCP网络搜索成功(通用解析)，获得 1 个结果")
+                            
+                            elif isinstance(mcp_search_data, list):
+                                # 情况4: 直接是列表格式
+                                for item in mcp_search_data:
+                                    if isinstance(item, dict):
+                                        search_result = self._safe_create_search_result(
+                                            title=item.get("title", ""),
+                                            content=item.get("snippet", item.get("content", "")),
+                                            url=item.get("url", item.get("link", "")),
+                                            source="MCP Web Search",
+                                            relevance_score=item.get("relevance_score", 0.8),
+                                            channel_type="MCP_SEARCH"
+                                        )
+                                        mcp_search_results.append(search_result)
+                                    else:
+                                        # 列表项不是字典，直接作为内容
+                                        search_result = self._safe_create_search_result(
+                                            title=f"MCP搜索结果 {len(mcp_search_results) + 1}",
+                                            content=item,
+                                            url="",
+                                            source="MCP Web Search (List)",
+                                            relevance_score=0.7,
+                                            channel_type="MCP_SEARCH"
+                                        )
+                                        mcp_search_results.append(search_result)
+                                
+                                mcp_search_success = True
+                                self.logger.info(f"✅ MCP网络搜索成功(列表格式)，获得 {len(mcp_search_results)} 个结果")
+                            
+                            elif isinstance(mcp_search_data, str):
+                                # 情况5: 字符串格式，可能需要解析
+                                self.logger.info("📝 MCP返回字符串格式，尝试解析...")
+                                parsed_results = self._parse_mcp_search_results(mcp_search_data)
+                                
+                                for item in parsed_results:
+                                    search_result = self._safe_create_search_result(
+                                        title=item.get("title", ""),
+                                        content=item.get("content", item.get("snippet", "")),
+                                        url=item.get("url", item.get("link", "")),
+                                        source="MCP Web Search (Parsed)",
+                                        relevance_score=item.get("relevance_score", 0.8),
+                                        channel_type="MCP_SEARCH"
+                                    )
+                                    mcp_search_results.append(search_result)
+                                
+                                mcp_search_success = True
+                                self.logger.info(f"✅ MCP网络搜索成功(字符串解析)，获得 {len(mcp_search_results)} 个结果")
+                            
+                            else:
+                                self.logger.warning(f"⚠️ MCP搜索结果格式不支持: {type(mcp_search_data)}")
+                            
+                            # 将MCP搜索结果添加到总搜索结果中
+                            if mcp_search_success and mcp_search_results:
+                                search_results.extend(mcp_search_results)
+                                self.logger.info(f"📊 总搜索结果数量: {len(search_results)}")
+                        else:
+                            self.logger.warning(f"⚠️ MCP网络搜索失败: {mcp_result.get('error')}")
+                    except Exception as e:
+                        self.logger.error(f"❌ MCP网络搜索异常: {e}")
+                        import traceback
+                        self.logger.error(f"详细错误信息: {traceback.format_exc()}")
+                     
+                if not mcp_search_success:
+                    # 使用增强文本处理器执行网络搜索
+                    self.logger.info("🔄 MCP网络搜索失败，使用传统搜索方法...")
+                    
+                    # 创建查询上下文     
+                    search_context = QueryContext(
+                        query=analysis_result.web_search_query,
+                        query_type=context.query_type,
+                        max_results=context.max_results,
+                        timeout=context.timeout
+                    )
+                    fallback_search_results = await self._perform_search(search_context)
+                    search_results.extend(fallback_search_results)  # 使用extend而不是赋值
+                    self.logger.info(f"🔄 传统搜索获得 {len(fallback_search_results)} 个结果，总计 {len(search_results)} 个结果")
+
                 # 使用增强文本处理器存储搜索结果到向量数据库
                 if search_results:
                     success = await self._store_search_results_to_vector(search_results)
@@ -795,7 +919,129 @@ class EnhancedRAGProcessor:
         deduplicated.sort(key=lambda x: x.get("score", 0), reverse=True)
         
         return deduplicated
+
+    def _parse_mcp_search_results(self, search_text: str) -> List[Dict[str, Any]]:
+        """
+        解析MCP搜索结果文本格式
+        
+        Args:
+            search_text: MCP返回的搜索结果文本
+            
+        Returns:
+            List[Dict]: 解析后的搜索结果列表
+        """
+        results = []
+        
+        try:
+            # 使用正则表达式解析搜索结果
+            # 匹配格式: 数字. "标题"\n   URL: url\n   摘要: 摘要内容
+            pattern = r'(\d+)\.\s*"([^"]+)"\s*\n\s*URL:\s*([^\n]+)\s*\n\s*摘要:\s*([^\n]+)'
+            
+            matches = re.findall(pattern, search_text, re.MULTILINE | re.DOTALL)
+            
+            for match in matches:
+                index, title, url, snippet = match
+                
+                # 清理数据
+                title = title.strip()
+                url = url.strip()
+                snippet = snippet.strip()
+                
+                # 移除摘要末尾的省略号和特殊字符
+                snippet = re.sub(r'[…\.]{2,}$', '', snippet).strip()
+                
+                result = {
+                    "title": title,
+                    "content": snippet,
+                    "snippet": snippet,
+                    "url": url,
+                    "link": url,
+                    "relevance_score": 0.8,  # 默认相关性分数
+                    "index": int(index)
+                }
+                
+                results.append(result)
+            
+            self.logger.info(f"📝 成功解析 {len(results)} 个搜索结果")
+            
+            # 如果正则匹配失败，尝试简单的行分割解析
+            if not results:
+                self.logger.warning("⚠️ 正则解析失败，尝试简单解析")
+                results = self._simple_parse_search_results(search_text)
+            
+            return results
+            
+        except Exception as e:
+            self.logger.error(f"❌ 解析MCP搜索结果失败: {e}")
+            # 返回一个包含原始文本的结果
+            return [{
+                "title": "MCP搜索结果",
+                "content": search_text[:500],  # 截取前500字符
+                "snippet": search_text[:200],   # 截取前200字符作为摘要
+                "url": "",
+                "relevance_score": 0.5
+            }]
     
+    def _simple_parse_search_results(self, search_text: str) -> List[Dict[str, Any]]:
+        """
+        简单解析搜索结果文本（备用方法）
+        
+        Args:
+            search_text: 搜索结果文本
+            
+        Returns:
+            List[Dict]: 解析后的结果列表
+        """
+        results = []
+        
+        try:
+            # 按行分割文本
+            lines = search_text.split('\n')
+            current_result = {}
+            
+            for line in lines:
+                line = line.strip()
+                
+                # 检测标题行（以数字开头）
+                title_match = re.match(r'(\d+)\.\s*"?([^"]+)"?', line)
+                if title_match:
+                    # 保存上一个结果
+                    if current_result and current_result.get('title'):
+                        results.append(current_result)
+                    
+                    # 开始新结果
+                    current_result = {
+                        "title": title_match.group(2).strip(),
+                        "content": "",
+                        "url": "",
+                        "relevance_score": 0.8
+                    }
+                
+                # 检测URL行
+                elif line.startswith('URL:'):
+                    url = line.replace('URL:', '').strip()
+                    if current_result:
+                        current_result["url"] = url
+                        current_result["link"] = url
+                
+                # 检测摘要行
+                elif line.startswith('摘要:'):
+                    snippet = line.replace('摘要:', '').strip()
+                    if current_result:
+                        current_result["content"] = snippet
+                        current_result["snippet"] = snippet
+            
+            # 添加最后一个结果
+            if current_result and current_result.get('title'):
+                results.append(current_result)
+            
+            self.logger.info(f"📝 简单解析获得 {len(results)} 个结果")
+            return results
+            
+        except Exception as e:
+            self.logger.error(f"❌ 简单解析也失败了: {e}")
+            return []
+
     def _extract_sources(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """提取来源信息"""
         sources = []
@@ -1210,3 +1456,145 @@ class EnhancedRAGProcessor:
         except Exception as e:
             self.logger.error(f"美化技术内容时出错: {e}")
             return content
+    
+    def debug_mcp_search_result(self, mcp_result: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        调试MCP搜索结果，提供详细的格式分析
+        
+        Args:
+            mcp_result: MCP工具返回的原始结果
+            
+        Returns:
+            Dict: 包含调试信息的字典
+        """
+        debug_info = {
+            "original_type": type(mcp_result),
+            "success": mcp_result.get("success", False),
+            "has_result": "result" in mcp_result,
+            "result_type": type(mcp_result.get("result")) if "result" in mcp_result else None,
+            "error": mcp_result.get("error"),
+            "analysis": []
+        }
+        
+        if "result" in mcp_result:
+            result_data = mcp_result["result"]
+            
+            if isinstance(result_data, dict):
+                debug_info["analysis"].append("结果是字典类型")
+                debug_info["dict_keys"] = list(result_data.keys())
+                
+                if "results" in result_data:
+                    debug_info["analysis"].append(f"包含'results'键，类型: {type(result_data['results'])}")
+                    if isinstance(result_data["results"], list):
+                        debug_info["analysis"].append(f"results是列表，长度: {len(result_data['results'])}")
+                        if result_data["results"]:
+                            first_item = result_data["results"][0]
+                            debug_info["analysis"].append(f"第一个结果项类型: {type(first_item)}")
+                            if isinstance(first_item, dict):
+                                debug_info["first_item_keys"] = list(first_item.keys())
+                
+                elif any(key in result_data for key in ["title", "content", "url", "snippet"]):
+                    debug_info["analysis"].append("看起来是单个搜索结果格式")
+                    debug_info["has_search_fields"] = [key for key in ["title", "content", "url", "snippet"] if key in result_data]
+                
+                else:
+                    debug_info["analysis"].append("字典格式未知，可能需要特殊处理")
+            
+            elif isinstance(result_data, list):
+                debug_info["analysis"].append(f"结果是列表类型，长度: {len(result_data)}")
+                if result_data:
+                    first_item = result_data[0]
+                    debug_info["analysis"].append(f"第一个列表项类型: {type(first_item)}")
+                    if isinstance(first_item, dict):
+                        debug_info["first_item_keys"] = list(first_item.keys())
+            
+            elif isinstance(result_data, str):
+                debug_info["analysis"].append(f"结果是字符串类型，长度: {len(result_data)}")
+                debug_info["string_preview"] = result_data[:100]
+            
+            else:
+                debug_info["analysis"].append(f"结果是其他类型: {type(result_data)}")
+        
+        return debug_info
+    
+    def _safe_create_search_result(self, 
+                                  title: Any = "", 
+                                  content: Any = "", 
+                                  url: Any = "", 
+                                  source: str = "Unknown",
+                                  relevance_score: float = 0.8,
+                                  channel_type: Any = "MCP_SEARCH") -> SearchResult:
+        """
+        安全创建SearchResult对象，确保所有字段类型正确
+        
+        Args:
+            title: 标题（任意类型，会转换为字符串）
+            content: 内容（任意类型，会转换为字符串）
+            url: URL（任意类型，会转换为字符串）
+            source: 来源
+            relevance_score: 相关性分数
+            channel_type: 通道类型（字符串或ChannelType）
+            
+        Returns:
+            SearchResult: 安全创建的搜索结果对象
+        """
+        try:
+            # 安全转换为字符串
+            safe_title = str(title) if title is not None else ""
+            safe_content = str(content) if content is not None else ""
+            safe_url = str(url) if url is not None else ""
+            
+            # 处理列表类型的特殊情况
+            if isinstance(title, list):
+                safe_title = " ".join(str(item) for item in title)
+            if isinstance(content, list):
+                safe_content = " ".join(str(item) for item in content)
+            if isinstance(url, list):
+                safe_url = str(url[0]) if url else ""
+            
+            # 清理和截断长度
+            safe_title = safe_title.strip()[:200]  # 限制标题长度
+            safe_content = safe_content.strip()[:2000]  # 限制内容长度
+            safe_url = safe_url.strip()[:500]  # 限制URL长度
+            
+            # 确保相关性分数在合理范围内
+            safe_relevance_score = max(0.0, min(1.0, float(relevance_score) if relevance_score else 0.8))
+            
+            # 处理ChannelType
+            if isinstance(channel_type, ChannelType):
+                safe_channel_type = channel_type
+            elif isinstance(channel_type, str):
+                # 尝试将字符串映射到ChannelType
+                channel_mapping = {
+                    "MCP_SEARCH": ChannelType.REAL_TIME_WEB,
+                    "GOOGLE_SEARCH": ChannelType.SEARCH_ENGINE,
+                    "LOCAL_KNOWLEDGE": ChannelType.LOCAL_KNOWLEDGE,
+                    "NEWS": ChannelType.NEWS_FEED,
+                    "SOCIAL": ChannelType.SOCIAL_MEDIA
+                }
+                safe_channel_type = channel_mapping.get(channel_type, ChannelType.REAL_TIME_WEB)
+            else:
+                safe_channel_type = ChannelType.REAL_TIME_WEB
+            
+            return SearchResult(
+                title=safe_title,
+                content=safe_content,
+                url=safe_url,
+                source=source,
+                timestamp=time.time(),
+                relevance_score=safe_relevance_score,
+                channel_type=safe_channel_type
+            )
+            
+        except Exception as e:
+            self.logger.error(f"❌ 创建SearchResult时出错: {e}")
+            # 返回一个基本的SearchResult对象
+            return SearchResult(
+                title="搜索结果",
+                content=f"处理搜索结果时出错: {str(e)}",
+                url="",
+                source=source,
+                timestamp=time.time(),
+                relevance_score=0.5,
+                channel_type=ChannelType.REAL_TIME_WEB
+            )

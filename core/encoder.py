@@ -72,7 +72,7 @@ _embedding_cache = EmbeddingCache()
 
 
 @lru_cache(maxsize=1)
-def get_sentence_transformer_model(model_name: str = "all-MiniLM-L6-v2") -> Optional[SentenceTransformer]:
+def get_sentence_transformer_model(model_name: str = "all-MiniLM-L12-v2") -> Optional[SentenceTransformer]:
     """
     获取sentence-transformers模型（带缓存）
     
@@ -93,7 +93,7 @@ def get_sentence_transformer_model(model_name: str = "all-MiniLM-L6-v2") -> Opti
         raise RuntimeError(f"无法加载sentence-transformers模型 {model_name}: {e}")
 
 
-def emb_text_opensource(text: str, model_name: str = "all-MiniLM-L6-v2") -> List[float]:
+def emb_text_opensource(text: str, model_name: str = "all-MiniLM-L12-v2") -> List[float]:
     """
     使用开源模型进行文本嵌入
     
@@ -202,7 +202,7 @@ def emb_text(
         
         # 选择模型
         if model == "auto":
-            model_name = "all-MiniLM-L6-v2"  # 默认轻量级英文模型
+            model_name = "all-MiniLM-L12-v2"  # 默认轻量级英文模型
         else:
             model_name = model
         
@@ -223,7 +223,7 @@ def emb_text(
         return emb_text_openai(client_or_text, text, openai_model)
 
 
-def get_embedding_dimension(model_name: str = "all-MiniLM-L6-v2") -> int:
+def get_embedding_dimension(model_name: str = "all-MiniLM-L12-v2") -> int:
     """
     获取嵌入向量的维度
     
