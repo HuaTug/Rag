@@ -461,14 +461,14 @@ async def demo_mcp_integration():
         # 初始化
         success = await mcp_integration.initialize()
         if not success:
-            print("❌ MCP工具集成初始化失败")
+            print(" MCP工具集成初始化失败")
             return
         
-        print("✅ MCP工具集成初始化成功")
+        print(" MCP工具集成初始化成功")
         
         # 测试计算器工具
         calc_result = await mcp_integration.execute_calculation("add", 10, 5)
-        print(f"🧮 计算结果: {calc_result.result if calc_result.success else calc_result.error}")
+        print(f" 计算结果: {calc_result.result if calc_result.success else calc_result.error}")
         
         # 测试数据库查询
         db_result = await mcp_integration.execute_database_query(
@@ -477,11 +477,11 @@ async def demo_mcp_integration():
             table_name="users",
             limit=5
         )
-        print(f"🗄️ 数据库查询: {db_result.result if db_result.success else db_result.error}")
+        print(f" 数据库查询: {db_result.result if db_result.success else db_result.error}")
         
         # 测试网络搜索
         search_result = await mcp_integration.execute_web_search("Python编程", 3)
-        print(f"🔍 搜索结果: {search_result.result if search_result.success else search_result.error}")
+        print(f" 搜索结果: {search_result.result if search_result.success else search_result.error}")
         
     finally:
         # 清理

@@ -103,7 +103,7 @@ class RAGService:
             "llm_client": "initializing"
         }
         
-        self.logger.info("🚀 RAG服务初始化中...")
+        self.logger.info(" RAG服务初始化中...")
     
     def _load_config(self, config_path: str) -> Dict[str, Any]:
         """加载配置"""
@@ -149,11 +149,11 @@ class RAGService:
     async def initialize(self):
         """初始化服务组件"""
         try:
-            self.logger.info("🔧 初始化RAG处理器...")
+            self.logger.info(" 初始化RAG处理器...")
             self.rag_processor = EnhancedRAGProcessor(config=self.config)
             self.health_status["rag_processor"] = "healthy"
             
-            self.logger.info("🧠 初始化查询分析器...")
+            self.logger.info(" 初始化查询分析器...")
             self.analyzer = SmartQueryAnalyzer(self.config)
             self.health_status["analyzer"] = "healthy"
             
@@ -162,10 +162,10 @@ class RAGService:
             self.health_status["llm_client"] = "healthy"
             
             self.is_ready = True
-            self.logger.info("✅ RAG服务初始化完成")
+            self.logger.info(" RAG服务初始化完成")
             
         except Exception as e:
-            self.logger.error(f"❌ 服务初始化失败: {e}")
+            self.logger.error(f" 服务初始化失败: {e}")
             self.health_status = {k: "error" for k in self.health_status.keys()}
             raise
     
@@ -175,7 +175,7 @@ class RAGService:
         start_time = time.time()
         
         try:
-            self.logger.info(f"📝 处理查询 [{request_id}]: {request.query}")
+            self.logger.info(f" 处理查询 [{request_id}]: {request.query}")
             
             if not self.is_ready:
                 raise HTTPException(status_code=503, detail="服务尚未就绪")
@@ -210,11 +210,11 @@ class RAGService:
                 metadata=rag_response.metadata
             )
             
-            self.logger.info(f"✅ 查询处理完成 [{request_id}]: {response.processing_time:.2f}s")
+            self.logger.info(f" 查询处理完成 [{request_id}]: {response.processing_time:.2f}s")
             return response
             
         except Exception as e:
-            self.logger.error(f"❌ 查询处理失败 [{request_id}]: {e}")
+            self.logger.error(f" 查询处理失败 [{request_id}]: {e}")
             raise HTTPException(
                 status_code=500,
                 detail=f"查询处理失败: {str(e)}"
@@ -235,7 +235,7 @@ class RAGService:
         self.logger.info("🔄 正在关闭RAG服务...")
         self.is_ready = False
         # 这里可以添加清理逻辑
-        self.logger.info("✅ RAG服务已关闭")
+        self.logger.info(" RAG服务已关闭")
 
 
 # 全局服务实例

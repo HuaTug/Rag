@@ -66,10 +66,10 @@ class ChunkingExperiments:
         
         results = []
         
-        self.logger.info(f"🧪 Starting chunking experiments with {len(configs)} configurations")
+        self.logger.info(f" Starting chunking experiments with {len(configs)} configurations")
         
         for config in configs:
-            self.logger.info(f"📊 Testing configuration: {config.name}")
+            self.logger.info(f" Testing configuration: {config.name}")
             
             # Create processor with current config
             processor_config = asdict(config)
@@ -85,7 +85,7 @@ class ChunkingExperiments:
             result = self._calculate_metrics(config.name, chunks, processing_time)
             results.append(result)
             
-            self.logger.info(f"✅ {config.name}: {result.total_chunks} chunks, "
+            self.logger.info(f" {config.name}: {result.total_chunks} chunks, "
                            f"{result.avg_chunk_size} avg size, "
                            f"{result.processing_time:.2f}s")
         
@@ -193,7 +193,7 @@ class ChunkingExperiments:
         
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            self.logger.info(f"📊 Visualization saved to {save_path}")
+            self.logger.info(f" Visualization saved to {save_path}")
         
         plt.show()
     
@@ -363,7 +363,7 @@ def create_test_dataset() -> List[Dict[str, Any]]:
 def run_comprehensive_experiment():
     """Run comprehensive chunking experiments"""
     
-    print("🚀 Starting Comprehensive Chunking Experiments")
+    print(" Starting Comprehensive Chunking Experiments")
     print("=" * 60)
     
     # Initialize experiment framework
@@ -371,13 +371,13 @@ def run_comprehensive_experiment():
     
     # Create test dataset
     test_data = create_test_dataset()
-    print(f"📊 Test dataset: {len(test_data)} documents")
+    print(f" Test dataset: {len(test_data)} documents")
     
     # Run experiments
     results = experiments.run_experiment(test_data)
     
     # Display results
-    print("\n📈 Experiment Results:")
+    print("\nExperiment Results:")
     print("=" * 60)
     
     df = experiments.compare_results(results)
@@ -397,7 +397,7 @@ def run_comprehensive_experiment():
     try:
         experiments.visualize_results(results, "chunking_comparison.png")
     except ImportError:
-        print("⚠️ Matplotlib not available, skipping visualization")
+        print(" Matplotlib not available, skipping visualization")
     
     return results
 

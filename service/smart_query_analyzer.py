@@ -74,14 +74,14 @@ class SmartQueryAnalyzer:
         self.fallback_to_keywords = self.config.get("fallback_to_keywords", True)
         self.analysis_timeout = self.config.get("analysis_timeout", 15)
         
-        self.logger.info(f"🧠 智能查询分析器初始化完成")
-        self.logger.info(f"   🎯 语义分析(LLM): {'✅ 启用' if self.enable_semantic_analysis else '❌ 禁用'}")
-        self.logger.info(f"   🔄 关键词回退: {'✅ 启用' if self.fallback_to_keywords else '❌ 禁用'}")
+        self.logger.info(f" 智能查询分析器初始化完成")
+        self.logger.info(f"    语义分析(LLM): {' 启用' if self.enable_semantic_analysis else ' 禁用'}")
+        self.logger.info(f"   🔄 关键词回退: {' 启用' if self.fallback_to_keywords else ' 禁用'}")
         
         # 关键词配置（仅用于回退）
         self._init_keyword_patterns()
         
-        self.logger.info(f"🧠 智能查询分析器初始化完成 - 语义分析: {self.enable_semantic_analysis}")
+        self.logger.info(f" 智能查询分析器初始化完成 - 语义分析: {self.enable_semantic_analysis}")
     
     def _init_keyword_patterns(self):
         """初始化关键词匹配模式（仅用于回退分析）"""
@@ -89,14 +89,14 @@ class SmartQueryAnalyzer:
         self.time_keywords = ["今天", "现在", "几号", "几月", "几点", "当前", "日期", "时间"]
         self.calculation_keywords = ["计算", "加", "减", "乘", "除", "+", "-", "*", "/"]
         
-        self.logger.info("📋 关键词模式已初始化（仅用于回退分析）")
+        self.logger.info(" 关键词模式已初始化（仅用于回退分析）")
     
     async def analyze_query_intent(self, query: str) -> QueryAnalysisResult:
         """分析查询意图 - 主入口方法"""
         start_time = time.time()
         
         try:
-            self.logger.info(f"🔍 开始分析查询: {query}")
+            self.logger.info(f" 开始分析查询: {query}")
             
             # 优先使用语义分析（大模型分析）- 让LLM智能判断所有类型的查询
             if self.enable_semantic_analysis:
@@ -104,10 +104,10 @@ class SmartQueryAnalyzer:
                     self.logger.info("🤖 使用LLM进行智能语义分析...")
                     result = await self._semantic_analysis(query)
                     analysis_time = time.time() - start_time
-                    self.logger.info(f"✅ 语义分析完成 - 耗时: {analysis_time:.2f}s")
+                    self.logger.info(f" 语义分析完成 - 耗时: {analysis_time:.2f}s")
                     return result
                 except Exception as e:
-                    self.logger.warning(f"⚠️ 语义分析失败: {e}")
+                    self.logger.warning(f" 语义分析失败: {e}")
                     # 如果不允许回退到关键词，直接抛出异常
                     if not self.fallback_to_keywords:
                         raise
@@ -118,11 +118,11 @@ class SmartQueryAnalyzer:
             self.logger.info("🔄 回退到简化的关键词分析...")
             result = await self._fallback_analysis(query)
             analysis_time = time.time() - start_time
-            self.logger.info(f"✅ 回退分析完成 - 耗时: {analysis_time:.2f}s")
+            self.logger.info(f" 回退分析完成 - 耗时: {analysis_time:.2f}s")
             return result
             
         except Exception as e:
-            self.logger.error(f"❌ 查询分析失败: {e}")
+            self.logger.error(f" 查询分析失败: {e}")
             # 返回默认分析结果
             return QueryAnalysisResult(
                 needs_vector_search=True,
@@ -153,15 +153,15 @@ class SmartQueryAnalyzer:
                     model="deepseek-v3-0324"
                 )
             except Exception as e:
-                self.logger.error(f"❌ 调用LLM失败: {e}")
+                self.logger.error(f" 调用LLM失败: {e}")
                 raise
             
-            self.logger.info(f"📝 LLM响应长度: {len(response)} 字符")
-            self.logger.info(f"📝 LLM原始响应: {response}...")
+            self.logger.info(f" LLM响应长度: {len(response)} 字符")
+            self.logger.info(f" LLM原始响应: {response}...")
             
             # 解析分析结果
             analysis = self._parse_llm_response(response, query)
-            self.logger.info(f"📝 解析LLM后的结果为: {analysis}")
+            self.logger.info(f" 解析LLM后的结果为: {analysis}")
 
             # 智能填充工具参数
             self._fill_tool_parameters(analysis, query)
@@ -170,15 +170,15 @@ class SmartQueryAnalyzer:
             
         except ValueError as e:
             # JSON解析错误，提供更详细的错误信息
-            self.logger.error(f"❌ JSON解析错误: {e}")
+            self.logger.error(f" JSON解析错误: {e}")
             if "Extra data" in str(e):
                 self.logger.error("💡 可能原因: LLM返回了多个JSON对象或JSON后有额外文本")
                 self.logger.error("💡 建议: 检查LLM提示词，确保只返回单个JSON对象")
             raise
             
         except Exception as e:
-            self.logger.error(f"❌ LLM语义分析失败: {e}")
-            self.logger.error(f"❌ 错误类型: {type(e).__name__}")
+            self.logger.error(f" LLM语义分析失败: {e}")
+            self.logger.error(f" 错误类型: {type(e).__name__}")
             raise
     
     def _build_analysis_prompt(self, query: str) -> str:
@@ -249,7 +249,7 @@ class SmartQueryAnalyzer:
   "min_similarity_threshold": 0.8
 }}
 
-⚠️ **重要提醒：**
+ **重要提醒：**
 1. 优先识别计算查询 - 任何包含数字+运算意图的查询都应该被识别为计算
 2. reasoning字段必须详细解释你的判断过程
 3. 如果是计算查询，needs_calculation=true，并正确解析数字和运算符
@@ -261,7 +261,7 @@ class SmartQueryAnalyzer:
     def _parse_llm_response(self, response: str, query: str) -> QueryAnalysisResult:
         """解析LLM响应 - 直接使用大模型的语义分析结果"""
         try:
-            self.logger.info(f"🔍 解析LLM响应，长度: {len(response)} 字符")
+            self.logger.info(f" 解析LLM响应，长度: {len(response)} 字符")
             
             # 清理响应文本
             response = response.strip()
@@ -275,7 +275,7 @@ class SmartQueryAnalyzer:
             try:
                 data = json.loads(response)
                 json_str = response
-                self.logger.info("✅ 直接解析整个响应成功")
+                self.logger.info(" 直接解析整个响应成功")
             except json.JSONDecodeError:
                 pass
             
@@ -289,7 +289,7 @@ class SmartQueryAnalyzer:
                     try:
                         data = json.loads(match)
                         json_str = match
-                        self.logger.info("✅ 正则表达式匹配JSON成功")
+                        self.logger.info(" 正则表达式匹配JSON成功")
                         break
                     except json.JSONDecodeError:
                         continue
@@ -301,7 +301,7 @@ class SmartQueryAnalyzer:
                     try:
                         json_str = json_block_match.group(1).strip()
                         data = json.loads(json_str)
-                        self.logger.info("✅ JSON代码块解析成功")
+                        self.logger.info(" JSON代码块解析成功")
                     except json.JSONDecodeError:
                         pass
             
@@ -321,7 +321,7 @@ class SmartQueryAnalyzer:
                             try:
                                 json_str = response[start_idx:i+1]
                                 data = json.loads(json_str)
-                                self.logger.info("✅ 手动匹配JSON对象成功")
+                                self.logger.info(" 手动匹配JSON对象成功")
                                 break
                             except json.JSONDecodeError:
                                 start_idx = -1
@@ -336,7 +336,7 @@ class SmartQueryAnalyzer:
             if not isinstance(data, dict):
                 raise ValueError("JSON解析结果不是字典类型")
             
-            # 🧠 直接使用LLM的语义分析结果，信任其智能判断
+            #  直接使用LLM的语义分析结果，信任其智能判断
             result = QueryAnalysisResult(
                 needs_web_search=data.get("needs_web_search", False),
                 web_search_query=data.get("web_search_query", ""),
@@ -352,20 +352,20 @@ class SmartQueryAnalyzer:
                 min_similarity_threshold=float(data.get("min_similarity_threshold", 0.8))
             )
             
-            # 📝 记录分析结果
-            self.logger.info(f"✅ LLM语义分析成功:")
-            self.logger.info(f"   🎯 查询类型: {result.query_type}")
-            self.logger.info(f"   🌐 网络搜索: {result.needs_web_search}")
-            self.logger.info(f"   🔍 向量搜索: {result.needs_vector_search}")
-            self.logger.info(f"   🧮 数学计算: {result.needs_calculation}")
-            self.logger.info(f"   📊 数据库查询: {result.needs_database}")
-            self.logger.info(f"   📈 置信度: {result.confidence:.2f}")
-            self.logger.info(f"   💭 推理: {result.reasoning[:100]}...")
+            #  记录分析结果
+            self.logger.info(f" LLM语义分析成功:")
+            self.logger.info(f"    查询类型: {result.query_type}")
+            self.logger.info(f"    网络搜索: {result.needs_web_search}")
+            self.logger.info(f"    向量搜索: {result.needs_vector_search}")
+            self.logger.info(f"    数学计算: {result.needs_calculation}")
+            self.logger.info(f"    数据库查询: {result.needs_database}")
+            self.logger.info(f"    置信度: {result.confidence:.2f}")
+            self.logger.info(f"    推理: {result.reasoning[:100]}...")
             
             return result
             
         except (json.JSONDecodeError, ValueError, KeyError) as e:
-            self.logger.error(f"❌ 解析LLM响应失败: {e}")
+            self.logger.error(f" 解析LLM响应失败: {e}")
             self.logger.error(f"原始响应: {response[:500]}...")
             self.logger.error(f"提取的JSON: {json_str[:200] if json_str else 'None'}...")
             # 回退到简化分析
@@ -373,7 +373,7 @@ class SmartQueryAnalyzer:
     
     async def _fallback_analysis(self, query: str) -> QueryAnalysisResult:
         """简化的回退分析（当LLM分析失败时使用）"""
-        self.logger.info("📋 使用简化回退分析...")
+        self.logger.info(" 使用简化回退分析...")
         
         # 默认策略：使用向量搜索 + 动态搜索策略
         analysis = QueryAnalysisResult(

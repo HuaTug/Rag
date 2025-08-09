@@ -50,7 +50,7 @@ class EnhancedStorageManager:
         # 初始化RAG处理器
         self.rag_processor = EnhancedRAGProcessor(config=self.config)
         
-        self.logger.info("✅ 增强存储管理器初始化完成")
+        self.logger.info(" 增强存储管理器初始化完成")
     
     async def store_search_results(self, search_results: List[SearchResult]) -> bool:
         """
@@ -92,7 +92,7 @@ class EnhancedStorageManager:
             return await self.store_search_results(search_results)
             
         except Exception as e:
-            self.logger.error(f"❌ 存储原始数据失败: {e}")
+            self.logger.error(f" 存储原始数据失败: {e}")
             return False
     
     async def store_text_documents(self, documents: List[Dict[str, str]]) -> bool:
@@ -119,7 +119,7 @@ class EnhancedStorageManager:
             return await self.store_raw_data(raw_data)
             
         except Exception as e:
-            self.logger.error(f"❌ 存储文本文档失败: {e}")
+            self.logger.error(f" 存储文本文档失败: {e}")
             return False
     
     def get_processing_stats(self) -> Dict[str, Any]:
@@ -206,7 +206,7 @@ if __name__ == "__main__":
         ]
         
         success = await manager.store_raw_data(raw_data)
-        print(f"管理器存储结果: {'✅ 成功' if success else '❌ 失败'}")
+        print(f"管理器存储结果: {' 成功' if success else ' 失败'}")
         
         # 方式2: 使用便捷函数
         documents = [
@@ -217,7 +217,7 @@ if __name__ == "__main__":
         ]
         
         success = await quick_store_documents(documents)
-        print(f"便捷函数存储结果: {'✅ 成功' if success else '❌ 失败'}")
+        print(f"便捷函数存储结果: {' 成功' if success else ' 失败'}")
         
         # 获取统计信息
         stats = manager.get_processing_stats()

@@ -67,15 +67,15 @@ class EnhancedTextProcessor:
             # Initialize jieba for Chinese segmentation
             if self.enable_chinese_segmentation:
                 jieba.initialize()
-                self.logger.info("✅ Jieba Chinese segmentation initialized")
+                self.logger.info(" Jieba Chinese segmentation initialized")
             
             # Initialize spaCy for English processing (optional)
             try:
                 self.nlp_en = spacy.load("en_core_web_sm")
-                self.logger.info("✅ SpaCy English model loaded")
+                self.logger.info(" SpaCy English model loaded")
             except OSError:
                 self.nlp_en = None
-                self.logger.warning("⚠️ SpaCy English model not found, using basic processing")
+                self.logger.warning(" SpaCy English model not found, using basic processing")
             
             # Initialize text splitter
             self.text_splitter = RecursiveCharacterTextSplitter(
@@ -102,7 +102,7 @@ class EnhancedTextProcessor:
             )
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to initialize components: {e}")
+            self.logger.error(f" Failed to initialize components: {e}")
     
     def process_search_results(self, search_results: List[Dict[str, Any]]) -> List[TextChunk]:
         """Process search results into optimized text chunks"""
@@ -139,10 +139,10 @@ class EnhancedTextProcessor:
                 all_chunks.extend(chunks)
                 
             except Exception as e:
-                self.logger.error(f"❌ Error processing search result {i}: {e}")
+                self.logger.error(f" Error processing search result {i}: {e}")
                 continue
         
-        self.logger.info(f"✅ Processed {len(search_results)} search results into {len(all_chunks)} chunks")
+        self.logger.info(f" Processed {len(search_results)} search results into {len(all_chunks)} chunks")
         return all_chunks
     
     def _clean_content(self, content: str) -> str:
@@ -390,7 +390,7 @@ class EnhancedTextProcessor:
         # Sort by importance score
         optimized_chunks.sort(key=lambda x: x.importance_score, reverse=True)
         
-        self.logger.info(f"✅ Optimized {len(chunks)} chunks to {len(optimized_chunks)} high-quality chunks")
+        self.logger.info(f" Optimized {len(chunks)} chunks to {len(optimized_chunks)} high-quality chunks")
         return optimized_chunks
     
     def _enhance_chunk_content(self, chunk: TextChunk) -> str:
@@ -422,7 +422,7 @@ def create_enhanced_text_processor(config: Dict[str, Any] = None) -> EnhancedTex
 # Test function
 def test_text_processor():
     """Test the enhanced text processor"""
-    print("🧪 Testing Enhanced Text Processor")
+    print(" Testing Enhanced Text Processor")
     
     processor = create_enhanced_text_processor({
         "chunk_size": 600,
@@ -448,7 +448,7 @@ def test_text_processor():
     # Process results
     chunks = processor.process_search_results(test_results)
     
-    print(f"✅ Generated {len(chunks)} chunks:")
+    print(f" Generated {len(chunks)} chunks:")
     for i, chunk in enumerate(chunks):
         print(f"\n--- Chunk {i+1} ---")
         print(f"Title: {chunk.title}")
@@ -460,7 +460,7 @@ def test_text_processor():
     
     # Test optimization
     optimized_chunks = processor.optimize_for_embedding(chunks)
-    print(f"\n✅ Optimized to {len(optimized_chunks)} high-quality chunks")
+    print(f"\n Optimized to {len(optimized_chunks)} high-quality chunks")
 
 if __name__ == "__main__":
     test_text_processor()

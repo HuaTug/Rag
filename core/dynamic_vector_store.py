@@ -475,7 +475,7 @@ class VectorStoreManager:
 # 使用示例和测试
 async def test_dynamic_vector_store():
     """测试动态向量存储"""
-    print("🧪 测试动态向量存储...")
+    print(" 测试动态向量存储...")
     
     # 创建存储实例
     store = DynamicVectorStore(
@@ -511,20 +511,20 @@ async def test_dynamic_vector_store():
     
     # 存储测试结果
     stored_count = await store.store_search_results(test_results)
-    print(f"✅ 存储了 {stored_count} 个文档")
+    print(f" 存储了 {stored_count} 个文档")
     
     # 搜索测试
     search_results = await store.search_similar("人工智能", limit=5)
-    print(f"✅ 搜索到 {len(search_results)} 个相似文档")
+    print(f" 搜索到 {len(search_results)} 个相似文档")
     
     for result in search_results:
         print(f"  - {result['title']}: {result['similarity_score']:.3f}")
     
     # 统计信息
     stats = store.get_collection_stats()
-    print(f"✅ 集合统计: {stats}")
+    print(f" 集合统计: {stats}")
     
-    print("🎉 测试完成!")
+    print(" 测试完成!")
 
 
 if __name__ == "__main__":

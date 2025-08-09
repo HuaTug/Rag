@@ -2,7 +2,7 @@
 
 一个基于多通道处理（MCP）架构的智能问答系统，结合了实时搜索和向量检索技术。
 
-## 🎯 系统功能
+##  系统功能
 
 ### 核心特性
 - **多通道搜索**: 支持Google搜索API实时获取最新信息
@@ -16,7 +16,7 @@
 用户查询 → MCP框架 → [Google搜索 + 向量检索] → LLM生成回答 → 用户
 ```
 
-## 🚀 快速开始
+##  快速开始
 
 ### 方法一：一键安装（推荐）
 
@@ -93,7 +93,7 @@ streamlit run web_interface.py
 python3 quick_test.py
 ```
 
-## 📋 API密钥获取指南
+##  API密钥获取指南
 
 ### Google Custom Search API
 1. 访问 [Google Cloud Console](https://console.cloud.google.com/)
@@ -193,7 +193,7 @@ await manager.process_query("写一个关于AI的故事", "creative")
 }
 ```
 
-## 🔧 开发和调试
+##  开发和调试
 
 ### 测试单个组件
 ```bash
@@ -217,7 +217,7 @@ tail -f rag_system.log
 2. **模块导入错误**: 确保依赖包已正确安装
 3. **向量存储错误**: 检查Milvus数据库文件权限
 
-## 📊 性能优化
+##  性能优化
 
 ### 建议配置
 - **内存**: 推荐8GB+
@@ -243,15 +243,15 @@ tail -f rag_system.log
 3. 提交更改
 4. 创建Pull Request
 
-## 📝 更新日志
+##  更新日志
 
 ### v1.0.0 (2024-01-xx)
-- ✅ 初始版本发布
-- ✅ MCP架构实现
-- ✅ Google搜索集成
-- ✅ Milvus向量存储
-- ✅ DeepSeek LLM集成
-- ✅ Web界面支持
+-  初始版本发布
+-  MCP架构实现
+-  Google搜索集成
+-  Milvus向量存储
+-  DeepSeek LLM集成
+-  Web界面支持
 
 ## 📄 许可证
 
@@ -263,4 +263,4 @@ MIT License - 详见LICENSE文件
 
 ---
 
-🎉 **开始探索智能问答的无限可能！**
+ **开始探索智能问答的无限可能！**

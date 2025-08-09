@@ -293,22 +293,22 @@ if __name__ == "__main__":
     # 测试代码
     test_text = "这是一个测试文本"
     
-    print("🧪 测试文本嵌入功能...")
+    print(" 测试文本嵌入功能...")
     
     try:
         # 测试开源模型
         print("测试开源模型...")
         embedding = emb_text(test_text)
-        print(f"✅ 开源模型嵌入成功，维度: {len(embedding)}")
+        print(f" 开源模型嵌入成功，维度: {len(embedding)}")
         
         # 测试缓存
         print("测试缓存功能...")
         embedding2 = emb_text(test_text)
-        print(f"✅ 缓存测试成功，结果一致: {embedding == embedding2}")
+        print(f" 缓存测试成功，结果一致: {embedding == embedding2}")
         
         # 显示缓存统计
         stats = get_cache_stats()
-        print(f"📊 缓存统计: {stats}")
+        print(f" 缓存统计: {stats}")
         
     except Exception as e:
-        print(f"❌ 测试失败: {e}")
+        print(f" 测试失败: {e}")

@@ -107,7 +107,7 @@ class MockSearchChannel(BaseChannel):
     
     async def search(self, context: QueryContext) -> List[SearchResult]:
         """模拟搜索"""
-        print(f"🔍 MockSearchChannel 正在搜索: {context.query}")
+        print(f" MockSearchChannel 正在搜索: {context.query}")
         
         # 模拟搜索延迟
         await asyncio.sleep(0.5)
@@ -134,7 +134,7 @@ class MockSearchChannel(BaseChannel):
             )
         ]
         
-        print(f"✅ MockSearchChannel 找到 {len(results)} 个结果")
+        print(f" MockSearchChannel 找到 {len(results)} 个结果")
         return results
     
     def is_available(self) -> bool:
@@ -158,7 +158,7 @@ class MockKnowledgeChannel(BaseChannel):
     
     async def search(self, context: QueryContext) -> List[SearchResult]:
         """模拟知识库搜索"""
-        print(f"📚 MockKnowledgeChannel 正在搜索: {context.query}")
+        print(f" MockKnowledgeChannel 正在搜索: {context.query}")
         
         # 模拟搜索延迟
         await asyncio.sleep(0.3)
@@ -176,7 +176,7 @@ class MockKnowledgeChannel(BaseChannel):
             )
         ]
         
-        print(f"✅ MockKnowledgeChannel 找到 {len(results)} 个结果")
+        print(f" MockKnowledgeChannel 找到 {len(results)} 个结果")
         return results
     
     def is_available(self) -> bool:
@@ -195,7 +195,7 @@ class MProcessor:
         """注册通道"""
         self.channels[channel.channel_type] = channel
         self.logger.info(f"注册通道: {channel.channel_type.value}")
-        print(f"✅ 已注册通道: {channel.channel_type.value}")
+        print(f" 已注册通道: {channel.channel_type.value}")
     
     def unregister_channel(self, channel_type: ChannelType):
         """注销通道"""
@@ -205,14 +205,14 @@ class MProcessor:
     
     async def process_query(self, context: QueryContext) -> List[SearchResult]:
         """处理查询请求"""
-        print(f"\n🚀 开始处理查询: {context.query}")
-        print(f"📊 查询类型: {context.query_type.value}")
+        print(f"\n 开始处理查询: {context.query}")
+        print(f" 查询类型: {context.query_type.value}")
         
         self.logger.info(f"处理查询: {context.query}")
         
         # 1. 查询分析和路由
         selected_channels = self._route_query(context)
-        print(f"🎯 选择了 {len(selected_channels)} 个通道进行搜索")
+        print(f" 选择了 {len(selected_channels)} 个通道进行搜索")
         
         # 2. 并行执行搜索
         tasks = []
@@ -233,25 +233,25 @@ class MProcessor:
                     all_results.extend(result)
                 elif isinstance(result, Exception):
                     self.logger.error(f"搜索异常: {result}")
-                    print(f"❌ 搜索异常: {result}")
+                    print(f" 搜索异常: {result}")
         
         # 4. 结果去重和排序
         deduplicated_results = self._deduplicate_results(all_results)
         sorted_results = self._sort_results(deduplicated_results, context)
         
         final_results = sorted_results[:context.max_results]
-        print(f"📋 最终返回 {len(final_results)} 个结果")
+        print(f" 最终返回 {len(final_results)} 个结果")
         
         return final_results
     
     def _route_query(self, context: QueryContext) -> List[BaseChannel]:
         """查询路由 - 根据查询类型选择合适的通道"""
-        print(f"🔍 开始路由查询，当前注册通道数: {len(self.channels)}")
+        print(f" 开始路由查询，当前注册通道数: {len(self.channels)}")
         
         # 显示所有注册的通道
         for channel_type, channel in self.channels.items():
             is_available = channel.is_available()
-            print(f"  📡 通道 {channel_type.value}: {'✅ 可用' if is_available else '❌ 不可用'}")
+            print(f"  📡 通道 {channel_type.value}: {' 可用' if is_available else ' 不可用'}")
             
             # 如果不可用，尝试获取详细信息
             if not is_available and hasattr(channel, 'api_key'):
@@ -266,7 +266,7 @@ class MProcessor:
             if channel.is_available()
         ]
         
-        print(f"🎯 找到 {len(available_channels)} 个可用通道")
+        print(f" 找到 {len(available_channels)} 个可用通道")
         
         # 根据查询类型和优先级排序
         available_channels.sort(
@@ -290,11 +290,11 @@ class MProcessor:
             )
         except asyncio.TimeoutError:
             self.logger.warning(f"通道 {channel.channel_type.value} 搜索超时")
-            print(f"⏰ 通道 {channel.channel_type.value} 搜索超时")
+            print(f" 通道 {channel.channel_type.value} 搜索超时")
             return []
         except Exception as e:
             self.logger.error(f"通道 {channel.channel_type.value} 搜索异常: {e}")
-            print(f"❌ 通道 {channel.channel_type.value} 搜索异常: {e}")
+            print(f" 通道 {channel.channel_type.value} 搜索异常: {e}")
             return []
     
     def _deduplicate_results(self, results: List[SearchResult]) -> List[SearchResult]:

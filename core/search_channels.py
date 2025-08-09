@@ -287,7 +287,7 @@ def create_google_search_channel(api_key: str, search_engine_id: str, config: Di
 # 测试函数
 async def test_google_search():
     """测试Google搜索功能"""
-    print("🧪 开始测试Google API搜索通道")
+    print(" 开始测试Google API搜索通道")
     
     # 从环境变量获取配置
     import os
@@ -295,7 +295,7 @@ async def test_google_search():
     search_engine_id = os.getenv("GOOGLE_SEARCH_ENGINE_ID")
     
     if not api_key or not search_engine_id:
-        print("❌ 请设置环境变量:")
+        print(" 请设置环境变量:")
         print("   export GOOGLE_API_KEY='your_api_key'")
         print("   export GOOGLE_SEARCH_ENGINE_ID='your_search_engine_id'")
         return
@@ -304,10 +304,10 @@ async def test_google_search():
     channel = create_google_search_channel(api_key, search_engine_id)
     
     if not channel.is_available():
-        print("❌ Google搜索通道不可用")
+        print(" Google搜索通道不可用")
         return
     
-    print("✅ Google API搜索通道可用")
+    print(" Google API搜索通道可用")
     
     # 创建测试查询
     from service.channel_framework import QueryContext, QueryType
@@ -319,7 +319,7 @@ async def test_google_search():
     ]
     
     for query in test_queries:
-        print(f"\n🔍 测试查询: {query}")
+        print(f"\n 测试查询: {query}")
         
         context = QueryContext(
             query=query,
@@ -331,7 +331,7 @@ async def test_google_search():
             results = await channel.search(context)
             
             if results:
-                print(f"✅ 找到 {len(results)} 个结果:")
+                print(f" 找到 {len(results)} 个结果:")
                 for i, result in enumerate(results, 1):
                     print(f"  {i}. {result.title}")
                     print(f"     URL: {result.url}")
@@ -339,12 +339,12 @@ async def test_google_search():
                     print(f"     内容预览: {result.content}...")
                     print()
             else:
-                print("❌ 没有找到结果")
+                print(" 没有找到结果")
                 
         except Exception as e:
-            print(f"❌ 搜索失败: {e}")
+            print(f" 搜索失败: {e}")
     
-    print("🎉 测试完成")
+    print(" 测试完成")
 
 
 if __name__ == "__main__":

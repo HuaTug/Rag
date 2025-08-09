@@ -61,7 +61,7 @@ class EnhancedStorageDemo:
     
     async def demo_basic_usage(self):
         """基本使用示例"""
-        print("🚀 基本使用示例")
+        print(" 基本使用示例")
         print("=" * 50)
         
         # 创建模拟搜索结果
@@ -82,9 +82,9 @@ class EnhancedStorageDemo:
         success = await self.rag_processor.store_search_results_with_enhanced_processing(search_results)
         
         if success:
-            print("✅ 搜索结果存储成功！")
+            print(" 搜索结果存储成功！")
         else:
-            print("❌ 搜索结果存储失败！")
+            print(" 搜索结果存储失败！")
         
         print()
     
@@ -115,21 +115,21 @@ class EnhancedStorageDemo:
         success = await self.rag_processor.store_search_results_with_enhanced_processing(batch_results)
         
         if success:
-            print(f"✅ 批量存储 {len(batch_results)} 个结果成功！")
+            print(f" 批量存储 {len(batch_results)} 个结果成功！")
         else:
-            print("❌ 批量存储失败！")
+            print(" 批量存储失败！")
         
         print()
     
     async def demo_error_handling(self):
         """错误处理示例"""
-        print("⚠️ 错误处理示例")
+        print(" 错误处理示例")
         print("=" * 50)
         
         # 测试空结果
         empty_results = []
         success = await self.rag_processor.store_search_results_with_enhanced_processing(empty_results)
-        print(f"空结果处理: {'✅ 正确处理' if not success else '❌ 处理异常'}")
+        print(f"空结果处理: {' 正确处理' if not success else ' 处理异常'}")
         
         # 测试无效内容
         invalid_results = [
@@ -140,7 +140,7 @@ class EnhancedStorageDemo:
             )
         ]
         success = await self.rag_processor.store_search_results_with_enhanced_processing(invalid_results)
-        print(f"无效内容处理: {'✅ 正确处理' if not success else '❌ 处理异常'}")
+        print(f"无效内容处理: {' 正确处理' if not success else ' 处理异常'}")
         
         print()
     
@@ -179,15 +179,15 @@ class EnhancedStorageDemo:
         success = await self.rag_processor.store_search_results_with_enhanced_processing(external_results)
         
         if success:
-            print("✅ 外部搜索结果集成存储成功！")
+            print(" 外部搜索结果集成存储成功！")
         else:
-            print("❌ 外部搜索结果集成存储失败！")
+            print(" 外部搜索结果集成存储失败！")
         
         print()
 
 async def main():
     """主函数"""
-    print("🎯 增强存储功能使用示例")
+    print(" 增强存储功能使用示例")
     print("=" * 60)
     
     demo = EnhancedStorageDemo()
@@ -199,10 +199,10 @@ async def main():
         await demo.demo_error_handling()
         await demo.demo_integration_example()
         
-        print("🎉 所有示例运行完成！")
+        print(" 所有示例运行完成！")
         
     except Exception as e:
-        print(f"❌ 运行示例时出错: {e}")
+        print(f" 运行示例时出错: {e}")
         import traceback
         traceback.print_exc()
 

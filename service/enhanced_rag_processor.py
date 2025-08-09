@@ -74,7 +74,7 @@ class EnhancedRAGProcessor:
         }
 
         self.text_processor = create_enhanced_text_processor(text_processor_config)
-        self.logger.info(f"✅ 初始化增强文本处理器: {self.text_processor.__class__.__name__}")
+        self.logger.info(f" 初始化增强文本处理器: {self.text_processor.__class__.__name__}")
 
         # 新增：初始化MCP工具集成
         self.mcp_integration = None
@@ -82,9 +82,9 @@ class EnhancedRAGProcessor:
             try:
                 from core.mcp_tool_integration import MCPToolIntegration
                 self.mcp_integration = MCPToolIntegration(self.config)
-                self.logger.info("✅ MCP工具集成模块已加载")
+                self.logger.info(" MCP工具集成模块已加载")
             except ImportError as e:
-                self.logger.warning(f"⚠️ MCP工具集成模块加载失败: {e}")
+                self.logger.warning(f" MCP工具集成模块加载失败: {e}")
                 self.mcp_integration = None
 
         
@@ -96,7 +96,7 @@ class EnhancedRAGProcessor:
         self.enable_fallback_search = self.config.get("enable_fallback_search", True)  # 启用回退搜索
         
         # 输出配置信息用于调试
-        self.logger.info(f"📊 智能搜索配置: similarity_threshold={self.similarity_threshold}, "
+        self.logger.info(f" 智能搜索配置: similarity_threshold={self.similarity_threshold}, "
                         f"min_similarity_for_answer={self.min_similarity_for_answer}, "
                         f"min_vector_results={self.min_vector_results}, "
                         f"enable_smart_search={self.enable_smart_search}")
@@ -115,13 +115,13 @@ class EnhancedRAGProcessor:
             
             if api_key:
                 self.llm_client = TencentDeepSeekClient(api_key=api_key)
-                self.logger.info("✅ 自动创建DeepSeek LLM客户端成功")
+                self.logger.info(" 自动创建DeepSeek LLM客户端成功")
             else:
-                self.logger.warning("⚠️ 未找到LLM API密钥，将使用智能回退模式")
+                self.logger.warning(" 未找到LLM API密钥，将使用智能回退模式")
                 self.llm_client = None
                 
         except Exception as e:
-            self.logger.error(f"❌ 创建LLM客户端失败: {e}")
+            self.logger.error(f" 创建LLM客户端失败: {e}")
             self.llm_client = None
     
     def _init_components(self):
@@ -135,7 +135,7 @@ class EnhancedRAGProcessor:
             
             # 3. 初始化MCP工具集成（异步初始化将在需要时进行）
             if self.mcp_integration:
-                self.logger.info("🔧 MCP工具集成模块已准备就绪，将在首次使用时初始化")
+                self.logger.info(" MCP工具集成模块已准备就绪，将在首次使用时初始化")
             
             self.logger.info("增强RAG处理器初始化完成")
             
@@ -162,7 +162,7 @@ class EnhancedRAGProcessor:
                 384
             )
             
-            self.logger.info(f"🔧 初始化向量存储: endpoint={milvus_endpoint}, dim={vector_dim}")
+            self.logger.info(f" 初始化向量存储: endpoint={milvus_endpoint}, dim={vector_dim}")
             
             # 动态向量存储（用于实时搜索结果）
             try:
@@ -173,9 +173,9 @@ class EnhancedRAGProcessor:
                     vector_dim=vector_dim
                 )
                 self.vector_store_manager.add_store("dynamic", dynamic_store)
-                self.logger.info("✅ 动态向量存储初始化成功")
+                self.logger.info(" 动态向量存储初始化成功")
             except Exception as e:
-                self.logger.error(f"❌ 动态向量存储初始化失败: {e}")
+                self.logger.error(f" 动态向量存储初始化失败: {e}")
             
             # 本地知识库存储
             try:
@@ -186,12 +186,12 @@ class EnhancedRAGProcessor:
                     vector_dim=vector_dim
                 )
                 self.vector_store_manager.add_store("local", local_store)
-                self.logger.info("✅ 本地知识库存储初始化成功")
+                self.logger.info(" 本地知识库存储初始化成功")
             except Exception as e:
-                self.logger.error(f"❌ 本地知识库存储初始化失败: {e}")
+                self.logger.error(f" 本地知识库存储初始化失败: {e}")
                 
         except Exception as e:
-            self.logger.error(f"❌ 向量存储初始化失败: {e}")
+            self.logger.error(f" 向量存储初始化失败: {e}")
             # 不抛出异常，允许系统继续运行，使用备用方法
     
     def _init_search_channels(self):
@@ -246,12 +246,12 @@ class EnhancedRAGProcessor:
                 success = await self.mcp_integration.initialize()
                 self.mcp_integration._is_initialized = success
                 if success:
-                    self.logger.info("✅ MCP工具集成延迟初始化成功")
+                    self.logger.info(" MCP工具集成延迟初始化成功")
                 else:
-                    self.logger.warning("⚠️ MCP工具集成延迟初始化失败")
+                    self.logger.warning(" MCP工具集成延迟初始化失败")
                 return success
             except Exception as e:
-                self.logger.error(f"❌ MCP工具集成延迟初始化异常: {e}")
+                self.logger.error(f" MCP工具集成延迟初始化异常: {e}")
                 self.mcp_integration._is_initialized = False
                 return False
         elif self.mcp_integration:
@@ -323,7 +323,7 @@ class EnhancedRAGProcessor:
         """将搜索结果存储到向量数据库（使用增强文本处理）"""
         try:
             if not search_results:
-                self.logger.warning("⚠️ 没有搜索结果需要存储")
+                self.logger.warning(" 没有搜索结果需要存储")
                 return False
             
             # 转换搜索结果格式
@@ -345,7 +345,7 @@ class EnhancedRAGProcessor:
             optimized_chunks = self.text_processor.optimize_for_embedding(text_chunks)
             
             if not optimized_chunks:
-                self.logger.warning("⚠️ 没有生成有效的文本块")
+                self.logger.warning(" 没有生成有效的文本块")
                 return False
             
             # 准备向量存储数据
@@ -374,34 +374,34 @@ class EnhancedRAGProcessor:
                 if hasattr(vector_store, 'store_search_results'):
                     stored_count = await vector_store.store_search_results(search_results)
                     if stored_count > 0:
-                        self.logger.info(f"✅ 成功存储 {stored_count} 个搜索结果到向量数据库")
+                        self.logger.info(f" 成功存储 {stored_count} 个搜索结果到向量数据库")
                         return True
                     else:
-                        self.logger.error("❌ 向量存储失败")
+                        self.logger.error(" 向量存储失败")
                         return False
                 # 对于其他类型的向量存储，尝试使用add_documents方法
                 elif hasattr(vector_store, 'add_documents'):
                     success = await vector_store.add_documents(documents)
                     if success:
-                        self.logger.info(f"✅ 成功存储 {len(optimized_chunks)} 个优化文本块到向量数据库")
+                        self.logger.info(f" 成功存储 {len(optimized_chunks)} 个优化文本块到向量数据库")
                         return True
                     else:
-                        self.logger.error("❌ 向量存储失败")
+                        self.logger.error(" 向量存储失败")
                         return False
                 else:
-                    self.logger.error("❌ 向量存储对象不支持存储操作")
+                    self.logger.error(" 向量存储对象不支持存储操作")
                     return False
             else:
-                self.logger.warning("⚠️ 向量存储未初始化")
-                self.logger.warning("⚠️ 增强存储失败，尝试使用备用方法")
+                self.logger.warning(" 向量存储未初始化")
+                self.logger.warning(" 增强存储失败，尝试使用备用方法")
                 # 尝试使用备用存储方法
             return await self._fallback_store_search_results(search_results)
                 
         except Exception as e:
-            self.logger.error(f"❌ 存储搜索结果到向量数据库失败: {e}")
+            self.logger.error(f" 存储搜索结果到向量数据库失败: {e}")
             import traceback
             self.logger.error(f"详细错误信息: {traceback.format_exc()}")
-            self.logger.warning("⚠️ 增强存储失败，尝试使用备用方法")
+            self.logger.warning(" 增强存储失败，尝试使用备用方法")
             # 尝试使用备用存储方法
             return await self._fallback_store_search_results(search_results)
     
@@ -410,10 +410,10 @@ class EnhancedRAGProcessor:
         try:
             self.logger.info("🔄 使用备用存储方法...")
             await self._store_search_results(search_results)
-            self.logger.info("✅ 备用存储方法执行成功")
+            self.logger.info(" 备用存储方法执行成功")
             return True
         except Exception as e:
-            self.logger.error(f"❌ 备用存储方法也失败了: {e}")
+            self.logger.error(f" 备用存储方法也失败了: {e}")
             return False
 
     async def process_query(self, context: QueryContext) -> RAGResponse:
@@ -434,7 +434,7 @@ class EnhancedRAGProcessor:
             
             # 1. 智能查询分析 - 核心改进
             analysis_result = await self.smart_analyzer.analyze_query_intent(query)
-            self.logger.info(f"🧠 查询分析完成: {analysis_result.query_type} "
+            self.logger.info(f" 查询分析完成: {analysis_result.query_type} "
                            f"(置信度: {analysis_result.confidence:.2f})")
             
             # 1.5 MCP工具建议和增强
@@ -448,7 +448,7 @@ class EnhancedRAGProcessor:
                         # 检查是否应该启用计算
                         if re.search(r'\d+.*[+\-*/].*\d+', query):
                             analysis_result.needs_calculation = True
-                            self.logger.info("🔧 根据MCP工具建议启用计算功能")
+                            self.logger.info(" 根据MCP工具建议启用计算功能")
                     
                     if "database_query" in suggested_tools and not analysis_result.needs_database:
                         # 检查是否应该启用数据库查询
@@ -462,7 +462,7 @@ class EnhancedRAGProcessor:
                                 "table_name": "users",
                                 "limit": 10
                             }
-                            self.logger.info("🔧 根据MCP工具建议启用数据库查询功能")
+                            self.logger.info(" 根据MCP工具建议启用数据库查询功能")
                     
                     # 新增：根据MCP工具建议启用网络搜索
                     if "web_search" in suggested_tools and not analysis_result.needs_web_search:
@@ -470,7 +470,7 @@ class EnhancedRAGProcessor:
                         if any(keyword in query.lower() for keyword in search_keywords):
                             analysis_result.needs_web_search = True
                             analysis_result.web_search_query = query
-                            self.logger.info("🔧 根据MCP工具建议启用网络搜索功能")
+                            self.logger.info(" 根据MCP工具建议启用网络搜索功能")
             
             # 2. 根据分析结果执行相应策略
             search_results = []
@@ -480,7 +480,7 @@ class EnhancedRAGProcessor:
             
             # 计算处理（如果需要）
             if analysis_result.needs_calculation:
-                self.logger.info("🧮 执行数学计算...")
+                self.logger.info(" 执行数学计算...")
                 
                 # 优先尝试使用MCP计算器工具
                 if self.mcp_integration:
@@ -518,12 +518,12 @@ class EnhancedRAGProcessor:
                                             "tool": "MCP Calculator",
                                             "execution_time": mcp_result.get("execution_time", 0)
                                         })
-                                        self.logger.info(f"✅ MCP计算器执行成功: {x} {symbol} {y} = {mcp_result['result']}")
+                                        self.logger.info(f" MCP计算器执行成功: {x} {symbol} {y} = {mcp_result['result']}")
                                     else:
-                                        self.logger.warning(f"⚠️ MCP计算器执行失败: {mcp_result.get('error')}")
+                                        self.logger.warning(f" MCP计算器执行失败: {mcp_result.get('error')}")
                                         
                                 except Exception as e:
-                                    self.logger.error(f"❌ MCP计算器调用异常: {e}")
+                                    self.logger.error(f" MCP计算器调用异常: {e}")
 
                         elif operation == "expression":
                             # 表达式计算
@@ -544,38 +544,38 @@ class EnhancedRAGProcessor:
                                             "execution_time": mcp_result.get("execution_time", 0)
                                         })
                                         mcp_calc_success = True
-                                        self.logger.info(f"✅ MCP表达式计算成功: {expression} = {mcp_result['result']}")
+                                        self.logger.info(f" MCP表达式计算成功: {expression} = {mcp_result['result']}")
                                     else:
-                                        self.logger.warning(f"⚠️ MCP表达式计算失败: {mcp_result.get('error')}")
+                                        self.logger.warning(f" MCP表达式计算失败: {mcp_result.get('error')}")
                                         
                                 except Exception as e:
-                                    self.logger.error(f"❌ MCP表达式计算异常: {e}")
+                                    self.logger.error(f" MCP表达式计算异常: {e}")
     
             
             # 向量搜索（如果需要）
             if analysis_result.needs_vector_search:
-                self.logger.info("🔍 执行向量搜索...")
+                self.logger.info(" 执行向量搜索...")
                 vector_results = await self._perform_vector_search(query, context.max_results)
                 
                 # 动态搜索策略：检查向量搜索结果质量
                 if analysis_result.enable_dynamic_search and vector_results:
                     max_similarity = max((result.get("similarity_score", 0) for result in vector_results), default=0)
-                    self.logger.info(f"📊 向量搜索最高相似度: {max_similarity:.3f}")
+                    self.logger.info(f" 向量搜索最高相似度: {max_similarity:.3f}")
                     
                     if max_similarity < analysis_result.min_similarity_threshold:
-                        self.logger.warning(f"⚠️ 向量搜索相似度过低 ({max_similarity:.3f} < {analysis_result.min_similarity_threshold})，启用网络搜索")
+                        self.logger.warning(f" 向量搜索相似度过低 ({max_similarity:.3f} < {analysis_result.min_similarity_threshold})，启用网络搜索")
                         analysis_result.needs_web_search = True
                         analysis_result.web_search_query = query
                         analysis_result.reasoning += f" - 向量搜索相似度过低({max_similarity:.3f})，启用网络搜索"
                 elif analysis_result.enable_dynamic_search and not vector_results:
-                    self.logger.warning("⚠️ 向量搜索无结果，启用网络搜索")
+                    self.logger.warning(" 向量搜索无结果，启用网络搜索")
                     analysis_result.needs_web_search = True
                     analysis_result.web_search_query = query
                     analysis_result.reasoning += " - 向量搜索无结果，启用网络搜索"
 
             # 网络搜索（如果需要）
             if analysis_result.needs_web_search:
-                self.logger.info(f"🌐 执行网络搜索: {analysis_result.web_search_query}")
+                self.logger.info(f" 执行网络搜索: {analysis_result.web_search_query}")
                 
                 # 优先尝试使用MCP网络搜索工具
                 mcp_search_success = False
@@ -586,15 +586,15 @@ class EnhancedRAGProcessor:
                             "query": analysis_result.web_search_query,
                             "limit": search_limit,
                         })
-                        self.logger.info(f"🔍 MCP网络搜索原始结果: {mcp_result}")
+                        self.logger.info(f" MCP网络搜索原始结果: {mcp_result}")
 
                         if mcp_result["success"]:
                             # 添加详细的调试信息
                             debug_info = self.debug_mcp_search_result(mcp_result)
-                            self.logger.info(f"🔧 MCP搜索结果调试信息: {debug_info}")
+                            self.logger.info(f" MCP搜索结果调试信息: {debug_info}")
                             
                             mcp_search_data = mcp_result["result"]
-                            self.logger.info(f"📝 MCP搜索数据类型: {type(mcp_search_data)}")
+                            self.logger.info(f" MCP搜索数据类型: {type(mcp_search_data)}")
                             
                             # 处理不同格式的MCP搜索结果
                             mcp_search_results = []
@@ -614,7 +614,7 @@ class EnhancedRAGProcessor:
                                         mcp_search_results.append(search_result)
                                     
                                     mcp_search_success = True
-                                    self.logger.info(f"✅ MCP网络搜索成功(标准格式)，获得 {len(mcp_search_results)} 个结果")
+                                    self.logger.info(f" MCP网络搜索成功(标准格式)，获得 {len(mcp_search_results)} 个结果")
                                 
                                 # 情况2: 直接是搜索结果字典 {"title": ..., "content": ...}
                                 elif "title" in mcp_search_data or "content" in mcp_search_data:
@@ -629,11 +629,11 @@ class EnhancedRAGProcessor:
                                     mcp_search_results.append(search_result)
                                     
                                     mcp_search_success = True
-                                    self.logger.info(f"✅ MCP网络搜索成功(单结果格式)，获得 1 个结果")
+                                    self.logger.info(f" MCP网络搜索成功(单结果格式)，获得 1 个结果")
                                 
                                 # 情况3: 其他字典格式，尝试解析
                                 else:
-                                    self.logger.warning(f"⚠️ MCP搜索结果为字典但格式未知，尝试通用解析: {list(mcp_search_data.keys())}")
+                                    self.logger.warning(f" MCP搜索结果为字典但格式未知，尝试通用解析: {list(mcp_search_data.keys())}")
                                     # 尝试将整个字典作为一个搜索结果
                                     content = str(mcp_search_data)[:500]  # 截取前500字符
                                     search_result = self._safe_create_search_result(
@@ -647,7 +647,7 @@ class EnhancedRAGProcessor:
                                     mcp_search_results.append(search_result)
                                     
                                     mcp_search_success = True
-                                    self.logger.info(f"✅ MCP网络搜索成功(通用解析)，获得 1 个结果")
+                                    self.logger.info(f" MCP网络搜索成功(通用解析)，获得 1 个结果")
                             
                             elif isinstance(mcp_search_data, list):
                                 # 情况4: 直接是列表格式
@@ -675,11 +675,11 @@ class EnhancedRAGProcessor:
                                         mcp_search_results.append(search_result)
                                 
                                 mcp_search_success = True
-                                self.logger.info(f"✅ MCP网络搜索成功(列表格式)，获得 {len(mcp_search_results)} 个结果")
+                                self.logger.info(f" MCP网络搜索成功(列表格式)，获得 {len(mcp_search_results)} 个结果")
                             
                             elif isinstance(mcp_search_data, str):
                                 # 情况5: 字符串格式，可能需要解析
-                                self.logger.info("📝 MCP返回字符串格式，尝试解析...")
+                                self.logger.info(" MCP返回字符串格式，尝试解析...")
                                 parsed_results = self._parse_mcp_search_results(mcp_search_data)
                                 
                                 for item in parsed_results:
@@ -694,19 +694,19 @@ class EnhancedRAGProcessor:
                                     mcp_search_results.append(search_result)
                                 
                                 mcp_search_success = True
-                                self.logger.info(f"✅ MCP网络搜索成功(字符串解析)，获得 {len(mcp_search_results)} 个结果")
+                                self.logger.info(f" MCP网络搜索成功(字符串解析)，获得 {len(mcp_search_results)} 个结果")
                             
                             else:
-                                self.logger.warning(f"⚠️ MCP搜索结果格式不支持: {type(mcp_search_data)}")
+                                self.logger.warning(f" MCP搜索结果格式不支持: {type(mcp_search_data)}")
                             
                             # 将MCP搜索结果添加到总搜索结果中
                             if mcp_search_success and mcp_search_results:
                                 search_results.extend(mcp_search_results)
-                                self.logger.info(f"📊 总搜索结果数量: {len(search_results)}")
+                                self.logger.info(f" 总搜索结果数量: {len(search_results)}")
                         else:
-                            self.logger.warning(f"⚠️ MCP网络搜索失败: {mcp_result.get('error')}")
+                            self.logger.warning(f" MCP网络搜索失败: {mcp_result.get('error')}")
                     except Exception as e:
-                        self.logger.error(f"❌ MCP网络搜索异常: {e}")
+                        self.logger.error(f" MCP网络搜索异常: {e}")
                         import traceback
                         self.logger.error(f"详细错误信息: {traceback.format_exc()}")
                      
@@ -731,12 +731,12 @@ class EnhancedRAGProcessor:
                     if success:
                         self.logger.info(f"💾 使用增强处理器成功存储了 {len(search_results)} 个搜索结果")
                     else:
-                        self.logger.warning("⚠️ 增强存储失败，尝试使用备用方法")
+                        self.logger.warning(" 增强存储失败，尝试使用备用方法")
                         await self._store_search_results(search_results)
             
             # 数据库查询（如果需要）
             if analysis_result.needs_database:
-                self.logger.info("🗄️ 执行数据库查询...")
+                self.logger.info(" 执行数据库查询...")
                 
                 # 优先尝试使用MCP数据库工具
                 mcp_db_success = False
@@ -768,12 +768,12 @@ class EnhancedRAGProcessor:
                                 "execution_time": mcp_result.get("execution_time", 0)
                             })
                             mcp_db_success = True
-                            self.logger.info("✅ MCP数据库查询执行成功")
+                            self.logger.info(" MCP数据库查询执行成功")
                         else:
-                            self.logger.warning(f"⚠️ MCP数据库查询失败: {mcp_result.get('error')}")
+                            self.logger.warning(f" MCP数据库查询失败: {mcp_result.get('error')}")
                             
                     except Exception as e:
-                        self.logger.error(f"❌ MCP数据库查询异常: {e}")
+                        self.logger.error(f" MCP数据库查询异常: {e}")
                 
                 # 如果MCP数据库查询失败，使用内置方法
                 if not mcp_db_success:
@@ -818,7 +818,7 @@ class EnhancedRAGProcessor:
                 }
             )
             
-            self.logger.info(f"✅ 智能查询处理完成，耗时: {processing_time:.2f}s, "
+            self.logger.info(f" 智能查询处理完成，耗时: {processing_time:.2f}s, "
                            f"策略: {response.metadata['strategy']}")
             return response
             
@@ -962,17 +962,17 @@ class EnhancedRAGProcessor:
                 
                 results.append(result)
             
-            self.logger.info(f"📝 成功解析 {len(results)} 个搜索结果")
+            self.logger.info(f" 成功解析 {len(results)} 个搜索结果")
             
             # 如果正则匹配失败，尝试简单的行分割解析
             if not results:
-                self.logger.warning("⚠️ 正则解析失败，尝试简单解析")
+                self.logger.warning(" 正则解析失败，尝试简单解析")
                 results = self._simple_parse_search_results(search_text)
             
             return results
             
         except Exception as e:
-            self.logger.error(f"❌ 解析MCP搜索结果失败: {e}")
+            self.logger.error(f" 解析MCP搜索结果失败: {e}")
             # 返回一个包含原始文本的结果
             return [{
                 "title": "MCP搜索结果",
@@ -1035,11 +1035,11 @@ class EnhancedRAGProcessor:
             if current_result and current_result.get('title'):
                 results.append(current_result)
             
-            self.logger.info(f"📝 简单解析获得 {len(results)} 个结果")
+            self.logger.info(f" 简单解析获得 {len(results)} 个结果")
             return results
             
         except Exception as e:
-            self.logger.error(f"❌ 简单解析也失败了: {e}")
+            self.logger.error(f" 简单解析也失败了: {e}")
             return []
 
     def _extract_sources(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -1207,7 +1207,7 @@ class EnhancedRAGProcessor:
                 )
             else:
                 # LLM不可用时，使用智能回退答案生成
-                self.logger.warning("⚠️ LLM客户端不可用，使用智能回退模式")
+                self.logger.warning(" LLM客户端不可用，使用智能回退模式")
                 answer = self._synthesize_intelligent_answer(query, context, analysis)
             
             # 计算置信度
@@ -1449,7 +1449,7 @@ class EnhancedRAGProcessor:
             
             # 添加技术要点的视觉分隔
             if '## 主要特性' in formatted or '## 基本特性' in formatted:
-                formatted = f"📋 **技术文档**\n\n{formatted}"
+                formatted = f" **技术文档**\n\n{formatted}"
             
             return formatted
             
@@ -1587,7 +1587,7 @@ class EnhancedRAGProcessor:
             )
             
         except Exception as e:
-            self.logger.error(f"❌ 创建SearchResult时出错: {e}")
+            self.logger.error(f" 创建SearchResult时出错: {e}")
             # 返回一个基本的SearchResult对象
             return SearchResult(
                 title="搜索结果",
