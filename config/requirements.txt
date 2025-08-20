@@ -8,7 +8,8 @@ httpx>=0.24.0
 
 # 数据处理
 pandas>=1.5.0
-numpy>=1.21.0
+# 修改numpy版本要求，兼容更多包
+numpy>=1.21.0,<2.1.0
 
 # 向量数据库
 pymilvus>=2.2.0
@@ -30,7 +31,8 @@ spacy>=3.4.0
 
 # 配置和环境
 pydantic>=2.0.0
-python-dotenv>=0.20.0
+# 修改python-dotenv版本要求，兼容更多包
+python-dotenv>=0.20.0,<=1.1.0
 
 # 日志和监控
 structlog>=22.0.0
@@ -50,3 +52,8 @@ click>=8.0.0
 # cryptography - 让系统自动选择兼容版本
 # torch - 太大，如果需要可以单独安装
 # mypy, flake8 - 开发工具，可选
+
+# 添加常用的兼容性包
+# 确保与各种AI/ML库的兼容性
+setuptools>=65.0.0
+wheel>=0.37.0
